@@ -1,0 +1,144 @@
+{% extends 'base.html' %}
+{% block title %}ADII — Gestion d'habillement{% endblock %}
+{% block content %}
+
+{% if user.is_authenticated %}
+  <script>
+    window.location = "{% if user.role == 'admin' %}{% url 'admin_dashboard' %}{% elif user.role == 'technicien' %}{% url 'tech_dashboard' %}{% elif user.role == 'secretaire' %}{% url 'secretaire_dashboard' %}{% else %}{% url 'agent_dashboard' %}{% endif %}";
+  </script>
+{% endif %}
+
+<div class="hero">
+  <div class="hero-logo">A<span>D</span>II</div>
+  <div class="hero-subtitle">Administration des Douanes et Impôts Indirects</div>
+  <h1 class="hero-title">Plateforme de gestion de l'effet<br>d'habillement des agents et officiers</h1>
+</div>
+
+<!-- ── ÉTAPES DE GESTION ── -->
+<div style="background:var(--surface);border-bottom:1px solid var(--border);padding:56px 24px">
+  <div style="max-width:1200px;margin:0 auto">
+    <h2 style="text-align:center;font-size:1rem;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:1px;margin-bottom:40px">
+      Étapes de gestion
+    </h2>
+
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:20px">
+
+      <!-- Étape 1 — Agent -->
+      <div style="border:1px solid var(--border);border-radius:14px;padding:24px;position:relative;border-top:4px solid #1a3a6b;background:white">
+        <div style="position:absolute;top:-14px;left:20px;background:#1a3a6b;color:white;font-size:.72rem;font-weight:700;padding:3px 14px;border-radius:20px;letter-spacing:.5px">Étape 1</div>
+        <div style="font-size:2rem;margin-bottom:12px">📋</div>
+        <h3 style="font-size:1rem;font-weight:700;margin-bottom:8px">Renseignement des fiches</h3>
+        <p style="font-size:.85rem;color:var(--text-muted);line-height:1.75;margin-bottom:16px">
+          La fiche peut être remplie par <strong>l'agent lui-même</strong> ou par une <strong>secrétaire habilitée</strong>.
+        </p>
+        <ul style="list-style:none;display:flex;flex-direction:column;gap:8px;margin-bottom:20px">
+          <li style="display:flex;align-items:center;gap:8px;font-size:.82rem;color:var(--text-muted)">
+            <span style="width:7px;height:7px;border-radius:50%;background:#1a3a6b;flex-shrink:0"></span>
+            Saisie par l'agent ou la secrétaire
+          </li>
+          <li style="display:flex;align-items:center;gap:8px;font-size:.82rem;color:var(--text-muted)">
+            <span style="width:7px;height:7px;border-radius:50%;background:#1a3a6b;flex-shrink:0"></span>
+            Validation par le responsable
+          </li>
+          <li style="display:flex;align-items:center;gap:8px;font-size:.82rem;color:var(--text-muted)">
+            <span style="width:7px;height:7px;border-radius:50%;background:#1a3a6b;flex-shrink:0"></span>
+            Suivi du statut en temps réel
+          </li>
+        </ul>
+        <div style="display:flex;flex-direction:column;gap:8px">
+          <a href="/auth/login/?mode=user" class="btn btn-primary btn-block">👤 Espace Agent</a>
+        </div>
+      </div>
+
+      <!-- Étape 2 — Secrétaire -->
+      <div style="border:1px solid var(--border);border-radius:14px;padding:24px;position:relative;border-top:4px solid #ec4899;background:white">
+        <div style="position:absolute;top:-14px;left:20px;background:#ec4899;color:white;font-size:.72rem;font-weight:700;padding:3px 14px;border-radius:20px;letter-spacing:.5px">Étape 2</div>
+        <div style="font-size:2rem;margin-bottom:12px">✍️</div>
+        <h3 style="font-size:1rem;font-weight:700;margin-bottom:8px">Rôle de la secrétaire</h3>
+        <p style="font-size:.85rem;color:var(--text-muted);line-height:1.75;margin-bottom:16px">
+          La secrétaire saisit les fiches au nom des agents et assure le suivi administratif des dossiers.
+        </p>
+        <ul style="list-style:none;display:flex;flex-direction:column;gap:8px;margin-bottom:20px">
+          <li style="display:flex;align-items:center;gap:8px;font-size:.82rem;color:var(--text-muted)">
+            <span style="width:7px;height:7px;border-radius:50%;background:#ec4899;flex-shrink:0"></span>
+            Saisie pour le compte d'un agent
+          </li>
+          <li style="display:flex;align-items:center;gap:8px;font-size:.82rem;color:var(--text-muted)">
+            <span style="width:7px;height:7px;border-radius:50%;background:#ec4899;flex-shrink:0"></span>
+            Consultation de tous les dossiers
+          </li>
+          <li style="display:flex;align-items:center;gap:8px;font-size:.82rem;color:var(--text-muted)">
+            <span style="width:7px;height:7px;border-radius:50%;background:#ec4899;flex-shrink:0"></span>
+            Traçabilité de la saisie
+          </li>
+        </ul>
+        <div style="display:flex;flex-direction:column;gap:8px">
+          <a href="/auth/login/?mode=user" class="btn btn-block" style="background:#ec4899;color:white;font-weight:600;border-radius:8px;padding:9px 18px;text-decoration:none;display:flex;align-items:center;justify-content:center;gap:6px;font-size:.875rem">
+            ✍️ Connexion Secrétaire
+          </a>
+        </div>
+      </div>
+
+      <!-- Étape 3 — Stock -->
+      <div style="border:1px solid var(--border);border-radius:14px;padding:24px;position:relative;border-top:4px solid #c8a84b;background:white">
+        <div style="position:absolute;top:-14px;left:20px;background:#c8a84b;color:#0f2444;font-size:.72rem;font-weight:700;padding:3px 14px;border-radius:20px;letter-spacing:.5px">Étape 3</div>
+        <div style="font-size:2rem;margin-bottom:12px">📦</div>
+        <h3 style="font-size:1rem;font-weight:700;margin-bottom:8px">Gestion du stock</h3>
+        <p style="font-size:.85rem;color:var(--text-muted);line-height:1.75;margin-bottom:16px">
+          Le technicien gère l'inventaire des tenues avec alertes automatiques en cas de seuil bas.
+        </p>
+        <ul style="list-style:none;display:flex;flex-direction:column;gap:8px;margin-bottom:20px">
+          <li style="display:flex;align-items:center;gap:8px;font-size:.82rem;color:var(--text-muted)">
+            <span style="width:7px;height:7px;border-radius:50%;background:#c8a84b;flex-shrink:0"></span>
+            Suivi des quantités par taille
+          </li>
+          <li style="display:flex;align-items:center;gap:8px;font-size:.82rem;color:var(--text-muted)">
+            <span style="width:7px;height:7px;border-radius:50%;background:#c8a84b;flex-shrink:0"></span>
+            Alerte automatique stock bas
+          </li>
+          <li style="display:flex;align-items:center;gap:8px;font-size:.82rem;color:var(--text-muted)">
+            <span style="width:7px;height:7px;border-radius:50%;background:#c8a84b;flex-shrink:0"></span>
+            Décrémentation à la production
+          </li>
+        </ul>
+        <div style="display:flex;flex-direction:column;gap:8px">
+          <a href="/auth/login/?mode=technicien" class="btn btn-block" style="background:#c8a84b;color:#0f2444;font-weight:600;border-radius:8px;padding:9px 18px;text-decoration:none;display:flex;align-items:center;justify-content:center;gap:6px;font-size:.875rem">
+            🔧 Connexion Technicien
+          </a>
+        </div>
+      </div>
+
+      <!-- Étape 4 — Livraisons -->
+      <div style="border:1px solid var(--border);border-radius:14px;padding:24px;position:relative;border-top:4px solid #10b981;background:white">
+        <div style="position:absolute;top:-14px;left:20px;background:#10b981;color:white;font-size:.72rem;font-weight:700;padding:3px 14px;border-radius:20px;letter-spacing:.5px">Étape 4</div>
+        <div style="font-size:2rem;margin-bottom:12px">🚚</div>
+        <h3 style="font-size:1rem;font-weight:700;margin-bottom:8px">Gestion des livraisons</h3>
+        <p style="font-size:.85rem;color:var(--text-muted);line-height:1.75;margin-bottom:16px">
+          Le responsable sélectionne <strong>plusieurs agents</strong> et confirme la livraison groupée en une opération.
+        </p>
+        <ul style="list-style:none;display:flex;flex-direction:column;gap:8px;margin-bottom:20px">
+          <li style="display:flex;align-items:center;gap:8px;font-size:.82rem;color:var(--text-muted)">
+            <span style="width:7px;height:7px;border-radius:50%;background:#10b981;flex-shrink:0"></span>
+            Sélection multiple d'agents
+          </li>
+          <li style="display:flex;align-items:center;gap:8px;font-size:.82rem;color:var(--text-muted)">
+            <span style="width:7px;height:7px;border-radius:50%;background:#10b981;flex-shrink:0"></span>
+            Confirmation groupée par le responsable
+          </li>
+          <li style="display:flex;align-items:center;gap:8px;font-size:.82rem;color:var(--text-muted)">
+            <span style="width:7px;height:7px;border-radius:50%;background:#10b981;flex-shrink:0"></span>
+            Notification automatique aux agents
+          </li>
+        </ul>
+        <div style="display:flex;flex-direction:column;gap:8px">
+          <a href="/auth/login/?mode=admin" class="btn btn-success btn-block">
+            ⚙️ Connexion Responsable
+          </a>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+{% endblock %}

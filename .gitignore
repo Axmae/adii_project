@@ -1,0 +1,31 @@
+# --- Python ---
+*.pyc
+*.pyo
+__pycache__/
+*.egg-info/
+dist/
+build/
+*.egg
+
+# --- Virtual environment ---
+.venv/
+
+# --- Django ---
+*.sqlite3
+media/
+staticfiles/
+
+# --- IDE ---
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# --- OS ---
+.DS_Store
+Thumbs.db
+
+# --- Project archives ---
+*.tar.gz
+*.zip

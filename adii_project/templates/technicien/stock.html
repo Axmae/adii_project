@@ -1,0 +1,133 @@
+{% extends 'base.html' %}
+{% block title %}Stock — ADII{% endblock %}
+{% block content %}
+<div class="container">
+  <div class="page-header" style="display:flex;justify-content:space-between;align-items:flex-end;flex-wrap:wrap;gap:12px">
+    <div>
+      <h1 class="page-title">📦 Gestion du stock</h1>
+      <p class="page-subtitle">Contrôlez les entrées et sorties des effets d'habillement</p>
+    </div>
+    <div style="display:flex;gap:10px">
+      <a href="{% url 'stock_movements_all' %}" class="btn btn-outline">📋 Historique</a>
+      <a href="{% url 'stock_add' %}" class="btn btn-primary">➕ Ajouter un article</a>
+    </div>
+  </div>
+
+  <!-- Stats -->
+  <div class="stats-grid" style="margin-bottom:24px">
+    <div class="stat-card">
+      <div class="stat-value">{{ total_items }}</div>
+      <div class="stat-label">Références</div>
+    </div>
+    <div class="stat-card blue">
+      <div class="stat-value">{{ total_quantity }}</div>
+      <div class="stat-label">Total unités</div>
+    </div>
+    <div class="stat-card amber">
+      <div class="stat-value">{{ low_stock }}</div>
+      <div class="stat-label">Stock bas</div>
+    </div>
+    <div class="stat-card" style="border-color:var(--danger)">
+      <div class="stat-value" style="color:var(--danger)">{{ out_of_stock }}</div>
+      <div class="stat-label">Épuisés</div>
+    </div>
+  </div>
+
+  <div style="display:grid;grid-template-columns:1fr 340px;gap:20px;align-items:start">
+
+    <!-- Table stock -->
+    <div class="card">
+      <div class="card-header">
+        <span class="card-title">📦 Inventaire</span>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Article</th>
+              <th>Catégorie</th>
+              <th>Taille</th>
+              <th>Quantité</th>
+              <th>Seuil</th>
+              <th>Statut</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for item in items %}
+            {% with s=item.status_label %}
+            <tr>
+              <td><strong>{{ item.name }}</strong></td>
+              <td>{{ item.get_category_display }}</td>
+              <td><span class="badge badge-gray">{{ item.size }}</span></td>
+              <td>
+                <strong style="font-size:1.1rem;{% if item.quantity == 0 %}color:var(--danger){% elif item.is_low %}color:var(--warning){% endif %}">
+                  {{ item.quantity }}
+                </strong>
+              </td>
+              <td style="color:var(--text-muted)">{{ item.min_threshold }}</td>
+              <td>
+                <span class="badge badge-{% if s.1 == 'red' %}red{% elif s.1 == 'amber' %}amber{% else %}green{% endif %}">
+                  {{ s.0 }}
+                </span>
+              </td>
+              <td>
+                <div style="display:flex;gap:6px">
+                  <a href="{% url 'stock_movement' item.pk %}" class="btn btn-primary btn-sm">
+                    ↕ Mouvement
+                  </a>
+                  <a href="{% url 'stock_edit' item.pk %}" class="btn btn-outline btn-sm">✏️</a>
+                </div>
+              </td>
+            </tr>
+            {% endwith %}
+            {% empty %}
+            <tr><td colspan="7">
+              <div class="empty-state"><div class="empty-icon">📦</div><p>Aucun article.</p></div>
+            </td></tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Derniers mouvements -->
+    <div class="card" style="position:sticky;top:80px">
+      <div class="card-header">
+        <span class="card-title">🕐 Derniers mouvements</span>
+        <a href="{% url 'stock_movements_all' %}" style="font-size:.75rem;color:var(--primary);text-decoration:none">Tout voir</a>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:10px">
+        {% for m in recent_movements %}
+        <div style="display:flex;align-items:flex-start;gap:10px;padding-bottom:10px;border-bottom:1px solid var(--border)">
+          <div style="width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:1rem;flex-shrink:0;
+            {% if m.type == 'entree' %}background:#d1fae5{% else %}background:#fee2e2{% endif %}">
+            {% if m.type == 'entree' %}↑{% else %}↓{% endif %}
+          </div>
+          <div style="flex:1;min-width:0">
+            <div style="font-weight:600;font-size:.85rem">{{ m.stock_item.name }} ({{ m.stock_item.size }})</div>
+            <div style="font-size:.78rem;color:var(--text-muted)">
+              {% if m.type == 'entree' %}+{% else %}-{% endif %}{{ m.quantity }} ·
+              {{ m.get_reason_display }}
+            </div>
+            <div style="font-size:.75rem;color:var(--text-muted)">
+              {{ m.created_by.get_full_name|default:m.created_by.username }} ·
+              {{ m.created_at|date:"d/m H:i" }}
+            </div>
+          </div>
+          <div style="font-size:.8rem;font-weight:700;
+            {% if m.type == 'entree' %}color:var(--success){% else %}color:var(--danger){% endif %}">
+            {% if m.type == 'entree' %}+{% else %}-{% endif %}{{ m.quantity }}
+          </div>
+        </div>
+        {% empty %}
+        <div style="text-align:center;color:var(--text-muted);font-size:.875rem;padding:16px">
+          Aucun mouvement enregistré.
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+
+  </div>
+</div>
+{% endblock %}

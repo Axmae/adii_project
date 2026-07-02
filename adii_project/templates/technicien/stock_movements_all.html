@@ -1,0 +1,86 @@
+{% extends 'base.html' %}
+{% block title %}Historique stock — ADII{% endblock %}
+{% block content %}
+<div class="container">
+  <div class="page-header" style="display:flex;justify-content:space-between;align-items:flex-end;flex-wrap:wrap;gap:12px">
+    <div>
+      <a href="{% url 'stock_list' %}" style="color:var(--text-muted);text-decoration:none;font-size:.875rem">← Stock</a>
+      <h1 class="page-title" style="margin-top:8px">📋 Historique des mouvements</h1>
+    </div>
+  </div>
+
+  <div class="main-content">
+    <!-- Filtres -->
+    <div class="card" style="margin-bottom:16px;padding:16px">
+      <form method="get" style="display:flex;gap:12px;flex-wrap:wrap;align-items:flex-end">
+        <div class="form-group" style="margin:0;flex:1;min-width:180px">
+          <label class="form-label">Rechercher</label>
+          <input type="text" name="search" value="{{ search }}" class="form-input" placeholder="Nom article...">
+        </div>
+        <div class="form-group" style="margin:0">
+          <label class="form-label">Type</label>
+          <select name="type" class="form-input">
+            <option value="">Tous</option>
+            <option value="entree" {% if mvt_type == 'entree' %}selected{% endif %}>Entrées ↑</option>
+            <option value="sortie" {% if mvt_type == 'sortie' %}selected{% endif %}>Sorties ↓</option>
+          </select>
+        </div>
+        <button type="submit" class="btn btn-primary">🔍 Filtrer</button>
+        <a href="{% url 'stock_movements_all' %}" class="btn btn-outline">Réinitialiser</a>
+      </form>
+    </div>
+
+    <div class="card">
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Date</th>
+              <th>Article</th>
+              <th>Type</th>
+              <th>Motif</th>
+              <th>Quantité</th>
+              <th>Avant → Après</th>
+              <th>Par</th>
+              <th>Note</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for m in movements %}
+            <tr>
+              <td style="color:var(--text-muted);white-space:nowrap">{{ m.created_at|date:"d/m/Y H:i" }}</td>
+              <td>
+                <strong>{{ m.stock_item.name }}</strong>
+                <span class="badge badge-gray" style="margin-left:4px">{{ m.stock_item.size }}</span>
+              </td>
+              <td>
+                {% if m.type == 'entree' %}
+                <span class="badge badge-green">↑ Entrée</span>
+                {% else %}
+                <span class="badge badge-red">↓ Sortie</span>
+                {% endif %}
+              </td>
+              <td style="color:var(--text-muted)">{{ m.get_reason_display }}</td>
+              <td>
+                <strong style="{% if m.type == 'entree' %}color:var(--success){% else %}color:var(--danger){% endif %}">
+                  {% if m.type == 'entree' %}+{% else %}-{% endif %}{{ m.quantity }}
+                </strong>
+              </td>
+              <td style="color:var(--text-muted);font-size:.85rem">
+                {{ m.quantity_before }} → <strong>{{ m.quantity_after }}</strong>
+              </td>
+              <td style="color:var(--text-muted)">{{ m.created_by.get_full_name|default:m.created_by.username }}</td>
+              <td style="color:var(--text-muted);font-size:.82rem">{{ m.note|default:"—" }}</td>
+            </tr>
+            {% empty %}
+            <tr><td colspan="8">
+              <div class="empty-state"><div class="empty-icon">📋</div><p>Aucun mouvement trouvé.</p></div>
+            </td></tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

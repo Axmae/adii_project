@@ -1,0 +1,24 @@
+{% extends 'base.html' %}
+{% block title %}{% if item %}Modifier{% else %}Ajouter{% endif %} article — ADII{% endblock %}
+{% block content %}
+<div class="container" style="max-width:600px">
+  <div class="page-header">
+    <a href="{% url 'stock_list' %}" style="color:var(--text-muted);text-decoration:none;font-size:.875rem">← Stock</a>
+    <h1 class="page-title" style="margin-top:8px">{% if item %}Modifier{% else %}Ajouter{% endif %} un article</h1>
+  </div>
+  <div class="card">
+    <form method="post">{% csrf_token %}
+      {% for field in form %}
+      <div class="form-group">
+        <label class="form-label">{{ field.label }}</label>
+        {{ field }}
+      </div>
+      {% endfor %}
+      <div style="display:flex;gap:10px;margin-top:8px">
+        <button type="submit" class="btn btn-primary">💾 Enregistrer</button>
+        <a href="{% url 'stock_list' %}" class="btn btn-outline">Annuler</a>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}

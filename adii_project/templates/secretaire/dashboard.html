@@ -1,0 +1,61 @@
+{% extends 'base.html' %}
+{% block title %}Secrétaire — ADII{% endblock %}
+{% block content %}
+<div class="container">
+<div class="page-header" style="display:flex;justify-content:space-between;align-items:flex-end;flex-wrap:wrap;gap:12px">
+<div>
+    <h1 class="page-title">📋 Espace Secrétaire</h1>
+    <p class="page-subtitle">Gestion des fiches de mesure pour les agents</p>
+</div>
+<a href="{% url 'secretaire_create' %}" class="btn btn-primary">➕ Nouvelle fiche</a>
+</div>
+<div class="main-content">
+<div class="card">
+    <div class="card-header"><span class="card-title">📂 Toutes les fiches ({{ measurements.count }})</span></div>
+    <div class="table-wrap">
+    <table>
+        <thead>
+        <tr>
+            <th>Agent</th>
+            <th>Équipement</th>
+            <th>Rempli par</th>
+            <th>Statut</th>
+            <th>Date</th>
+            <th></th>
+        </tr>
+        </thead>
+        <tbody>
+        {% for m in measurements %}
+        <tr>
+            <td><strong>{{ m.user.get_full_name }}</strong><br>
+            <span style="color:var(--text-muted);font-size:.8rem">{{ m.user.matricule }}</span>
+            </td>
+            <td>{{ m.get_type_equipement_display }}</td>
+            <td>
+            {% if m.rempli_par and m.rempli_par != m.user %}
+                <span class="badge badge-purple">✍️ {{ m.rempli_par.get_full_name }}</span>
+            {% else %}
+                <span class="badge badge-gray">👤 Agent</span>
+            {% endif %}
+            </td>
+            <td><span class="badge badge-{{ m.status_color }}">{{ m.get_status_display }}</span></td>
+            <td style="color:var(--text-muted)">{{ m.created_at|date:"d/m/Y" }}</td>
+            <td>
+            <a href="{% url 'measurement_detail' m.pk %}" class="btn btn-outline btn-sm">👁 Voir</a>
+            {% if m.can_edit %}
+            <a href="{% url 'secretaire_create' %}?agent={{ m.user.pk }}" class="btn btn-outline btn-sm">✏️ Modifier</a>
+            {% endif %}
+            </td>
+        </tr>
+        {% empty %}
+        <tr><td colspan="6">
+            <div class="empty-state"><div class="empty-icon">📋</div><p>Aucune fiche pour le moment.</p></div>
+        </td></tr>
+        {% endfor %}
+        </tbody>
+    </table>
+    </div>
+</div>
+</div>
+</div>
+{% endblock %}

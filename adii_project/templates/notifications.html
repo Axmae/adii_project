@@ -1,0 +1,29 @@
+{% extends 'base.html' %}
+{% block title %}Notifications — ADII{% endblock %}
+{% block content %}
+<div class="container" style="max-width:700px">
+  <div class="page-header" style="display:flex;justify-content:space-between;align-items:flex-end">
+    <h1 class="page-title">🔔 Notifications</h1>
+    {% if notifications %}<a href="{% url 'mark_all_read' %}" class="btn btn-outline btn-sm">Tout marquer comme lu</a>{% endif %}
+  </div>
+  <div class="main-content">
+    <div class="card" style="padding:0">
+      {% for n in notifications %}
+      <div class="dropdown-item {% if not n.read %}unread{% endif %}" style="border-radius:0">
+        <div class="notif-dot" style="{% if n.read %}background:var(--border){% endif %}"></div>
+        <div style="flex:1">
+          <div style="font-weight:600;{% if n.read %}color:var(--text-muted){% endif %}">{{ n.title }}</div>
+          <div style="color:var(--text-muted);font-size:.875rem;margin-top:2px">{{ n.message }}</div>
+          <div style="color:var(--text-muted);font-size:.75rem;margin-top:4px">{{ n.created_at|date:"d/m/Y à H:i" }}</div>
+        </div>
+        {% if not n.read %}
+        <a href="{% url 'mark_read' n.pk %}" style="color:var(--primary);font-size:.75rem;white-space:nowrap;text-decoration:none">Marquer lu</a>
+        {% endif %}
+      </div>
+      {% empty %}
+      <div class="empty-state"><div class="empty-icon">🔔</div><p>Aucune notification.</p></div>
+      {% endfor %}
+    </div>
+  </div>
+</div>
+{% endblock %}

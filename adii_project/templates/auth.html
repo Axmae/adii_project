@@ -1,0 +1,94 @@
+{% extends 'base.html' %}
+{% block title %}Connexion — ADII{% endblock %}
+{% block content %}
+<div class="auth-wrap">
+  <div class="auth-box">
+    <div class="auth-header">
+      <a href="/" style="color:var(--text-muted);text-decoration:none;font-size:.875rem">← Retour</a>
+      <div style="margin-top:16px">
+        <div class="auth-role-badge">
+          {% if mode == 'admin' %}⚙️ Administrateur
+          {% elif mode == 'technicien' %}🔧 Technicien
+          {% else %}👤 Utilisateur{% endif %}
+        </div>
+      </div>
+      <h1 style="font-size:1.5rem;font-weight:700;margin-top:8px">Connexion</h1>
+      <p style="color:var(--text-muted);font-size:.875rem;margin-top:4px">
+        {% if mode == 'admin' %}Accès réservé aux administrateurs.
+        {% elif mode == 'technicien' %}Accès réservé aux techniciens.
+        {% else %}Accédez à votre fiche de mesure.{% endif %}
+      </p>
+    </div>
+
+    {% if mode == 'user' %}
+    <div class="auth-tabs">
+      <button class="auth-tab active" data-tab="login" onclick="showTab('login')">Connexion</button>
+      <button class="auth-tab" data-tab="register" onclick="showTab('register')">Inscription</button>
+    </div>
+    {% endif %}
+
+    <div id="panel-login" class="auth-panel">
+      <form method="post">
+        {% csrf_token %}
+        <input type="hidden" name="action" value="login">
+        <div class="form-group">
+          <label class="form-label">Email</label>
+          <input class="form-input" type="email" name="username" placeholder="votre@email.com" required>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Mot de passe</label>
+          <input class="form-input" type="password" name="password" placeholder="••••••••" required>
+        </div>
+        <button type="submit" class="btn btn-primary btn-block btn-lg" style="margin-top:8px">Se connecter</button>
+      </form>
+    </div>
+
+    {% if mode == 'user' %}
+    <div id="panel-register" class="auth-panel" style="display:none">
+      <form method="post">
+        {% csrf_token %}
+        <input type="hidden" name="action" value="register">
+        {% if register_form.errors %}
+        <div class="form-errors">
+          {% for field in register_form %}{% for e in field.errors %}<div>{{ e }}</div>{% endfor %}{% endfor %}
+        </div>
+        {% endif %}
+        <div class="form-grid">
+          <div class="form-group">
+            <label class="form-label">Prénom</label>
+            <input class="form-input" type="text" name="prenom" required>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Nom</label>
+            <input class="form-input" type="text" name="nom" required>
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Email</label>
+          <input class="form-input" type="email" name="email" required>
+        </div>
+        <div class="form-grid">
+          <div class="form-group">
+            <label class="form-label">Matricule</label>
+            <input class="form-input" type="text" name="matricule" required>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Service</label>
+            <input class="form-input" type="text" name="service" required>
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Mot de passe</label>
+          <input class="form-input" type="password" name="password1" required>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Confirmer le mot de passe</label>
+          <input class="form-input" type="password" name="password2" required>
+        </div>
+        <button type="submit" class="btn btn-accent btn-block btn-lg" style="margin-top:8px">Créer mon compte</button>
+      </form>
+    </div>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

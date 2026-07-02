@@ -1,0 +1,47 @@
+{% extends 'base.html' %}
+{% block title %}Mon espace — ADII{% endblock %}
+{% block content %}
+<div class="container">
+  <div class="page-header" style="display:flex;justify-content:space-between;align-items:flex-end;flex-wrap:wrap;gap:12px">
+    <div>
+      <h1 class="page-title">Bonjour, {{ user.prenom|default:user.username }} 👋</h1>
+      <p class="page-subtitle">Matricule : {{ user.matricule|default:"—" }} · Service : {{ user.service|default:"—" }}</p>
+    </div>
+    <a href="{% url 'create_measurement' %}" class="btn btn-primary">➕ Nouvelle fiche</a>
+  </div>
+  <div class="main-content">
+    {% if not measurements %}
+    <div class="card">
+      <div class="empty-state">
+        <div class="empty-icon">📋</div>
+        <h3 style="margin-bottom:8px">Aucune fiche de mesure</h3>
+        <p>Commencez par créer votre fiche pour recevoir votre équipement.</p>
+        <a href="{% url 'create_measurement' %}" class="btn btn-primary" style="margin-top:16px">Créer ma fiche</a>
+      </div>
+    </div>
+    {% else %}
+    <div class="card">
+      <div class="card-header"><span class="card-title">📂 Mes dossiers ({{ measurements.count }})</span></div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Équipement</th><th>Statut</th><th>Date</th><th></th></tr></thead>
+          <tbody>
+            {% for m in measurements %}
+            <tr>
+              <td><strong>{{ m.get_type_equipement_display }}</strong></td>
+              <td><span class="badge badge-{{ m.status_color }}">{{ m.get_status_display }}</span></td>
+              <td style="color:var(--text-muted)">{{ m.created_at|date:"d/m/Y" }}</td>
+              <td style="display:flex;gap:6px">
+                {% if m.can_edit %}<a href="{% url 'edit_measurement' m.pk %}" class="btn btn-outline btn-sm">✏️ Modifier</a>{% endif %}
+                <a href="{% url 'measurement_detail' m.pk %}" class="btn btn-outline btn-sm">👁 Détail</a>
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

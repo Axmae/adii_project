@@ -1,0 +1,49 @@
+{% extends 'base.html' %}
+{% block title %}Utilisateurs — ADII{% endblock %}
+{% block content %}
+<div class="container">
+  <div class="page-header">
+    <a href="{% url 'admin_dashboard' %}" style="color:var(--text-muted);text-decoration:none;font-size:.875rem">← Tableau de bord</a>
+    <h1 class="page-title" style="margin-top:8px">👥 Gestion des utilisateurs</h1>
+  </div>
+  <div class="main-content">
+    <div class="card">
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Nom</th><th>Email</th><th>Matricule</th><th>Service</th><th>Rôle</th><th>Modifier rôle</th></tr></thead>
+          <tbody>
+            {% for u in users %}
+            <tr>
+              <td><strong>{{ u.get_full_name|default:u.username }}</strong></td>
+              <td style="color:var(--text-muted)">{{ u.email }}</td>
+              <td>{{ u.matricule|default:"—" }}</td>
+              <td>{{ u.service|default:"—" }}</td>
+              <td>
+                <span class="badge {% if u.role == 'admin' %}badge-purple{% elif u.role == 'technicien' %}badge-green{% else %}badge-blue{% endif %}">
+                  {{ u.get_role_display }}
+                </span>
+              </td>
+              <td>
+                {% if u != request.user %}
+                <form method="post" action="{% url 'change_role' u.pk %}" style="display:flex;gap:6px">
+                  {% csrf_token %}
+                  <select name="role" class="form-input" style="width:auto;padding:5px 8px;font-size:.8rem">
+                    <option value="agent" {% if u.role == 'agent' %}selected{% endif %}>Agent</option>
+                    <option value="admin" {% if u.role == 'admin' %}selected{% endif %}>Admin</option>
+                    <option value="technicien" {% if u.role == 'technicien' %}selected{% endif %}>Technicien</option>
+                  </select>
+                  <button type="submit" class="btn btn-primary btn-sm">OK</button>
+                </form>
+                {% else %}
+                <span style="color:var(--text-muted);font-size:.8rem">(vous)</span>
+                {% endif %}
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

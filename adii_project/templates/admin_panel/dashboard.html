@@ -1,0 +1,180 @@
+{% extends 'base.html' %}
+{% block title %}Administration — ADII{% endblock %}
+{% block content %}
+<div class="container">
+  <div class="page-header">
+    <h1 class="page-title">📊 Tableau de bord administrateur</h1>
+    <p class="page-subtitle">Gestion des fiches et suivi des dotations</p>
+  </div>
+  <div class="main-content">
+
+    <!-- Stats -->
+    <div class="stats-grid">
+      <div class="stat-card"><div class="stat-value">{{ stats.total }}</div><div class="stat-label">Total dossiers</div></div>
+      <div class="stat-card amber"><div class="stat-value">{{ stats.en_attente }}</div><div class="stat-label">En attente</div></div>
+      <div class="stat-card blue"><div class="stat-value">{{ stats.en_production }}</div><div class="stat-label">En production</div></div>
+      <div class="stat-card" style="border-color:var(--teal)"><div class="stat-value">{{ stats.pret }}</div><div class="stat-label">Prêts</div></div>
+      <div class="stat-card green"><div class="stat-value">{{ stats.livre }}</div><div class="stat-label">Livrés</div></div>
+      <div class="stat-card purple"><div class="stat-value">{{ stats.agents }}</div><div class="stat-label">Agents</div></div>
+    </div>
+
+    <!-- Boutons actions groupées -->
+    <div style="display:flex;justify-content:flex-end;gap:10px;margin-bottom:20px;flex-wrap:wrap">
+      <a href="{% url 'avancement_groupe' %}" class="btn btn-primary">
+        📋 Avancement groupé
+      </a>
+      <a href="{% url 'livraison_groupee' %}" class="btn btn-success">
+        🚚 Livraison groupée
+        {% if stats.pret > 0 %}
+        <span style="background:white;color:var(--success);border-radius:10px;padding:1px 8px;font-size:.75rem;margin-left:4px">
+          {{ stats.pret }}
+        </span>
+        {% endif %}
+      </a>
+    </div>
+
+    <!-- Alertes stock bas -->
+    {% if stock_alerts %}
+    <div class="card" style="margin-bottom:20px;border-left:4px solid var(--warning)">
+      <div class="card-header">
+        <span class="card-title">⚠️ Alertes stock bas</span>
+        <a href="{% url 'stock_list' %}" class="btn btn-outline btn-sm">Voir le stock</a>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:8px">
+        {% for item in stock_alerts %}
+        <div style="display:flex;justify-content:space-between;align-items:center;padding:10px 14px;background:var(--bg);border-radius:8px">
+          <div>
+            <strong>{{ item.name }}</strong>
+            <span class="badge badge-gray" style="margin-left:6px">{{ item.size }}</span>
+          </div>
+          <div style="display:flex;align-items:center;gap:12px">
+            <span style="font-size:.85rem;color:var(--text-muted)">Seuil : {{ item.min_threshold }}</span>
+            <span class="badge {% if item.quantity == 0 %}badge-red{% else %}badge-amber{% endif %}">
+              {{ item.quantity }} restant(s)
+            </span>
+          </div>
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+    {% endif %}
+
+    <!-- Derniers mouvements stock -->
+    <div class="card" style="margin-bottom:20px">
+      <div class="card-header">
+        <span class="card-title">📦 Derniers mouvements de stock</span>
+        <a href="{% url 'stock_movements_all' %}" class="btn btn-outline btn-sm">Tout voir</a>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Date</th><th>Article</th><th>Type</th>
+              <th>Qté</th><th>Avant → Après</th><th>Par</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for m in recent_stock_movements %}
+            <tr>
+              <td style="color:var(--text-muted);white-space:nowrap">{{ m.created_at|date:"d/m/Y H:i" }}</td>
+              <td><strong>{{ m.stock_item.name }}</strong> <span class="badge badge-gray">{{ m.stock_item.size }}</span></td>
+              <td>
+                {% if m.type == 'entree' %}
+                <span class="badge badge-green">↑ Entrée</span>
+                {% else %}
+                <span class="badge badge-red">↓ Sortie</span>
+                {% endif %}
+              </td>
+              <td><strong style="{% if m.type == 'entree' %}color:var(--success){% else %}color:var(--danger){% endif %}">
+                {% if m.type == 'entree' %}+{% else %}-{% endif %}{{ m.quantity }}
+              </strong></td>
+              <td style="color:var(--text-muted);font-size:.85rem">{{ m.quantity_before }} → {{ m.quantity_after }}</td>
+              <td style="color:var(--text-muted)">{{ m.created_by.get_full_name|default:m.created_by.username }}</td>
+            </tr>
+            {% empty %}
+            <tr><td colspan="6" style="text-align:center;color:var(--text-muted);padding:20px">Aucun mouvement.</td></tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Toutes les fiches -->
+    <div class="card">
+      <div class="card-header">
+        <span class="card-title">📋 Toutes les fiches</span>
+        <a href="{% url 'manage_users' %}" class="btn btn-outline btn-sm">👥 Utilisateurs</a>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Agent</th><th>Matricule</th><th>Équipement</th>
+              <th>Statut</th><th>Date</th><th>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for m in measurements %}
+            <tr>
+              <td>
+                <strong>{{ m.user.get_full_name }}</strong><br>
+                <span style="color:var(--text-muted);font-size:.8rem">{{ m.user.service }}</span>
+              </td>
+              <td style="color:var(--text-muted)">{{ m.user.matricule }}</td>
+              <td>{{ m.get_type_equipement_display }}</td>
+              <td><span class="badge badge-{{ m.status_color }}">{{ m.get_status_display }}</span></td>
+              <td style="color:var(--text-muted)">{{ m.created_at|date:"d/m/Y" }}</td>
+              <td>
+                <div style="display:flex;gap:6px;flex-wrap:wrap">
+                  <a href="{% url 'measurement_detail' m.pk %}" class="btn btn-outline btn-sm">👁 Voir</a>
+                  {% if m.status == 'en_attente' %}
+                  <form method="post" action="{% url 'validate_measurement' m.pk %}" style="display:inline">
+                    {% csrf_token %}
+                    <input type="hidden" name="action" value="valide">
+                    <button type="submit" class="btn btn-success btn-sm">✅ Valider</button>
+                  </form>
+                  <button onclick="openRefuse({{ m.pk }})" class="btn btn-danger btn-sm">❌ Refuser</button>
+                  {% endif %}
+                </div>
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- Modal refus -->
+<div id="refuse-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:500;align-items:center;justify-content:center">
+  <div style="background:white;border-radius:var(--radius);padding:28px;max-width:440px;width:90%;box-shadow:var(--shadow-lg)">
+    <h3 style="margin-bottom:12px">Refuser la demande</h3>
+    <form id="refuse-form" method="post">
+      {% csrf_token %}
+      <input type="hidden" name="action" value="refuse">
+      <div class="form-group">
+        <label class="form-label">Motif du refus (optionnel)</label>
+        <textarea class="form-input" name="notes_admin" rows="3" placeholder="Expliquez la raison..."></textarea>
+      </div>
+      <div style="display:flex;gap:10px">
+        <button type="submit" class="btn btn-danger">Confirmer le refus</button>
+        <button type="button" onclick="closeRefuse()" class="btn btn-outline">Annuler</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+{% endblock %}
+{% block extra_js %}
+<script>
+function openRefuse(pk){
+  document.getElementById('refuse-form').action='/admin-dashboard/valider/'+pk+'/';
+  document.getElementById('refuse-modal').style.display='flex';
+}
+function closeRefuse(){
+  document.getElementById('refuse-modal').style.display='none';
+}
+</script>
+{% endblock %}

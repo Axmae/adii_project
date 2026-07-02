@@ -1,0 +1,57 @@
+{% extends 'base.html' %}
+{% block title %}Dossier #{{ m.pk }} — ADII{% endblock %}
+{% block content %}
+<div class="container" style="max-width:800px">
+  <div class="page-header">
+    <a href="javascript:history.back()" style="color:var(--text-muted);text-decoration:none;font-size:.875rem">← Retour</a>
+    <h1 class="page-title" style="margin-top:8px">Dossier #{{ m.pk }} — {{ m.get_type_equipement_display }}</h1>
+  </div>
+  <div class="main-content">
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:20px">
+      <div class="card">
+        <div class="card-title" style="margin-bottom:12px">👤 Agent</div>
+        <div><strong>{{ m.user.get_full_name }}</strong></div>
+        <div style="color:var(--text-muted);font-size:.875rem">{{ m.user.email }}</div>
+        <div style="color:var(--text-muted);font-size:.875rem">Matricule : {{ m.user.matricule }}</div>
+        <div style="color:var(--text-muted);font-size:.875rem">Service : {{ m.user.service }}</div>
+      </div>
+      <div class="card">
+        <div class="card-title" style="margin-bottom:12px">📋 Dossier</div>
+        <div>Statut : <span class="badge badge-{{ m.status_color }}">{{ m.get_status_display }}</span></div>
+        <div style="color:var(--text-muted);font-size:.875rem;margin-top:8px">Créé le {{ m.created_at|date:"d/m/Y à H:i" }}</div>
+        <div style="color:var(--text-muted);font-size:.875rem">Mis à jour {{ m.updated_at|date:"d/m/Y à H:i" }}</div>
+        {% if m.notes_admin %}<div style="margin-top:8px;padding:8px;background:var(--bg);border-radius:6px;font-size:.875rem">📝 {{ m.notes_admin }}</div>{% endif %}
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-title" style="margin-bottom:16px">📏 Mesures</div>
+      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px">
+        <div style="background:var(--bg);border-radius:8px;padding:14px;text-align:center">
+          <div style="font-size:1.5rem;font-weight:700">{{ m.tour_poitrine }}<span style="font-size:.875rem;font-weight:400"> cm</span></div>
+          <div style="font-size:.75rem;color:var(--text-muted);margin-top:2px">Tour de poitrine</div>
+        </div>
+        <div style="background:var(--bg);border-radius:8px;padding:14px;text-align:center">
+          <div style="font-size:1.5rem;font-weight:700">{{ m.tour_taille }}<span style="font-size:.875rem;font-weight:400"> cm</span></div>
+          <div style="font-size:.75rem;color:var(--text-muted);margin-top:2px">Tour de taille</div>
+        </div>
+        <div style="background:var(--bg);border-radius:8px;padding:14px;text-align:center">
+          <div style="font-size:1.5rem;font-weight:700">{{ m.tour_hanches }}<span style="font-size:.875rem;font-weight:400"> cm</span></div>
+          <div style="font-size:.75rem;color:var(--text-muted);margin-top:2px">Tour de hanches</div>
+        </div>
+        <div style="background:var(--bg);border-radius:8px;padding:14px;text-align:center">
+          <div style="font-size:1.5rem;font-weight:700">{{ m.epaules }}<span style="font-size:.875rem;font-weight:400"> cm</span></div>
+          <div style="font-size:.75rem;color:var(--text-muted);margin-top:2px">Épaules</div>
+        </div>
+        <div style="background:var(--bg);border-radius:8px;padding:14px;text-align:center">
+          <div style="font-size:1.5rem;font-weight:700">{{ m.manche }}<span style="font-size:.875rem;font-weight:400"> cm</span></div>
+          <div style="font-size:.75rem;color:var(--text-muted);margin-top:2px">Manche</div>
+        </div>
+        <div style="background:var(--bg);border-radius:8px;padding:14px;text-align:center">
+          <div style="font-size:1.5rem;font-weight:700">{{ m.entrejambe }}<span style="font-size:.875rem;font-weight:400"> cm</span></div>
+          <div style="font-size:.75rem;color:var(--text-muted);margin-top:2px">Entrejambe</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

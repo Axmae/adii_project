@@ -1,0 +1,116 @@
+{% extends 'base.html' %}
+{% block title %}{% if edit %}Modifier{% else %}Nouvelle{% endif %} fiche — ADII{% endblock %}
+{% block content %}
+{% load static %}
+<div class="container" style="max-width:1100px">
+  <div class="page-header">
+    <a href="{% url 'agent_dashboard' %}" style="color:var(--text-muted);text-decoration:none;font-size:.875rem">← Mes dossiers</a>
+    <h1 class="page-title" style="margin-top:8px">{% if edit %}Modifier la fiche{% else %}Nouvelle fiche de mesure{% endif %}</h1>
+    <p class="page-subtitle">Renseignez vos mesures en centimètres avec précision.</p>
+  </div>
+
+  <div style="display:grid;grid-template-columns:340px 1fr;gap:24px;align-items:start">
+
+    <!-- SCHÉMA GAUCHE -->
+    <div class="card" style="position:sticky;top:80px;text-align:center;padding:16px">
+      <p style="font-size:.8rem;font-weight:600;color:var(--text-muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:12px">Guide des mesures</p>
+      <img src="{% static 'img/schema_mesures_corps.svg' %}"
+           alt="Schéma des zones de mesure"
+           style="width:100%;max-width:280px">
+      <div style="margin-top:12px;background:var(--bg);border-radius:8px;padding:10px;text-align:left;font-size:.8rem;color:var(--text-muted);line-height:1.8">
+        <div>🟢 <strong>Poitrine</strong> — sous les aisselles</div>
+        <div>🟠 <strong>Taille</strong> — partie la plus fine</div>
+        <div>🔴 <strong>Hanches</strong> — partie la plus large</div>
+        <div>🔵 <strong>Épaules</strong> — d'une épaule à l'autre</div>
+        <div>🟣 <strong>Manche</strong> — épaule jusqu'au poignet</div>
+        <div>🩷 <strong>Entrejambe</strong> — entrejambe jusqu'au sol</div>
+      </div>
+    </div>
+
+    <!-- FORMULAIRE DROITE -->
+    <div class="card">
+      <form method="post">
+        {% csrf_token %}
+        {% if form.errors %}
+        <div class="form-errors">{% for f in form %}{% for e in f.errors %}<div>{{ f.label }} : {{ e }}</div>{% endfor %}{% endfor %}</div>
+        {% endif %}
+
+        <div class="form-group">
+          <label class="form-label">Type d'équipement</label>
+          {{ form.type_equipement }}
+        </div>
+
+        <div style="background:var(--bg);border-radius:var(--radius-sm);padding:20px;margin-bottom:20px">
+          <h3 style="font-size:.9rem;font-weight:600;color:var(--text-muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:16px">📏 Mesures du haut</h3>
+          <div class="form-grid">
+            <div class="form-group">
+              <label class="form-label" style="display:flex;align-items:center;gap:6px">
+                <span style="width:10px;height:10px;border-radius:50%;background:#10b981;display:inline-block"></span>
+                Tour de poitrine (cm)
+              </label>
+              {{ form.tour_poitrine }}
+            </div>
+            <div class="form-group">
+              <label class="form-label" style="display:flex;align-items:center;gap:6px">
+                <span style="width:10px;height:10px;border-radius:50%;background:#f59e0b;display:inline-block"></span>
+                Tour de taille (cm)
+              </label>
+              {{ form.tour_taille }}
+            </div>
+            <div class="form-group">
+              <label class="form-label" style="display:flex;align-items:center;gap:6px">
+                <span style="width:10px;height:10px;border-radius:50%;background:#ef4444;display:inline-block"></span>
+                Tour de hanches (cm)
+              </label>
+              {{ form.tour_hanches }}
+            </div>
+            <div class="form-group">
+              <label class="form-label" style="display:flex;align-items:center;gap:6px">
+                <span style="width:10px;height:10px;border-radius:50%;background:#3b82f6;display:inline-block"></span>
+                Largeur épaules (cm)
+              </label>
+              {{ form.epaules }}
+            </div>
+            <div class="form-group">
+              <label class="form-label" style="display:flex;align-items:center;gap:6px">
+                <span style="width:10px;height:10px;border-radius:50%;background:#8b5cf6;display:inline-block"></span>
+                Longueur manche (cm)
+              </label>
+              {{ form.manche }}
+            </div>
+          </div>
+
+          <h3 style="font-size:.9rem;font-weight:600;color:var(--text-muted);text-transform:uppercase;letter-spacing:.5px;margin:16px 0">📏 Mesures du bas</h3>
+          <div class="form-grid">
+            <div class="form-group">
+              <label class="form-label" style="display:flex;align-items:center;gap:6px">
+                <span style="width:10px;height:10px;border-radius:50%;background:#ec4899;display:inline-block"></span>
+                Entrejambe (cm)
+              </label>
+              {{ form.entrejambe }}
+            </div>
+          </div>
+        </div>
+
+        <div style="display:flex;gap:12px">
+          <button type="submit" class="btn btn-primary btn-lg">{% if edit %}💾 Enregistrer{% else %}📤 Soumettre la fiche{% endif %}</button>
+          <a href="{% url 'agent_dashboard' %}" class="btn btn-outline btn-lg">Annuler</a>
+        </div>
+      </form>
+    </div>
+
+  </div>
+</div>
+
+<!-- Responsive: stack on mobile -->
+<style>
+@media(max-width:768px){
+  div[style*="grid-template-columns:340px"]{
+    grid-template-columns: 1fr !important;
+  }
+  div[style*="position:sticky"]{
+    position: static !important;
+  }
+}
+</style>
+{% endblock %}

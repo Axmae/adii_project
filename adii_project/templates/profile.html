@@ -1,0 +1,32 @@
+{% extends 'base.html' %}
+{% block title %}Mon profil — ADII{% endblock %}
+{% block content %}
+<div class="container" style="max-width:600px">
+  <div class="page-header">
+    <h1 class="page-title">👤 Mon profil</h1>
+  </div>
+  <div class="card">
+    <div style="display:flex;align-items:center;gap:16px;margin-bottom:24px;padding-bottom:20px;border-bottom:1px solid var(--border)">
+      <div style="width:56px;height:56px;border-radius:50%;background:var(--primary);color:white;display:flex;align-items:center;justify-content:center;font-size:1.5rem;font-weight:700">
+        {{ user.prenom|first|upper|default:user.username|first|upper }}
+      </div>
+      <div>
+        <div style="font-weight:700;font-size:1.1rem">{{ user.get_full_name|default:user.username }}</div>
+        <span class="badge {% if user.role == 'admin' %}badge-purple{% elif user.role == 'technicien' %}badge-green{% else %}badge-blue{% endif %}">{{ user.get_role_display }}</span>
+      </div>
+    </div>
+    <form method="post">{% csrf_token %}
+      <div class="form-grid">
+        <div class="form-group"><label class="form-label">Prénom</label>{{ form.prenom }}</div>
+        <div class="form-group"><label class="form-label">Nom</label>{{ form.nom }}</div>
+      </div>
+      <div class="form-group"><label class="form-label">Email</label>{{ form.email }}</div>
+      <div class="form-grid">
+        <div class="form-group"><label class="form-label">Matricule</label>{{ form.matricule }}</div>
+        <div class="form-group"><label class="form-label">Service</label>{{ form.service }}</div>
+      </div>
+      <button type="submit" class="btn btn-primary">💾 Enregistrer</button>
+    </form>
+  </div>
+</div>
+{% endblock %}

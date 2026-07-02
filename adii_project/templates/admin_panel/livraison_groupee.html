@@ -1,0 +1,114 @@
+{% extends 'base.html' %}
+{% block title %}Livraison groupée — ADII{% endblock %}
+{% block content %}
+<div class="container">
+  <div class="page-header" style="display:flex;justify-content:space-between;align-items:flex-end;flex-wrap:wrap;gap:12px">
+    <div>
+      <a href="{% url 'admin_dashboard' %}" style="color:var(--text-muted);text-decoration:none;font-size:.875rem">← Tableau de bord</a>
+      <h1 class="page-title" style="margin-top:8px">🚚 Livraison groupée</h1>
+      <p class="page-subtitle">Sélectionnez les agents dont la tenue est prête à être remise.</p>
+    </div>
+  </div>
+
+  <div class="main-content">
+    {% if not fiches_pretes %}
+    <div class="card">
+      <div class="empty-state">
+        <div class="empty-icon">✅</div>
+        <h3 style="margin-bottom:8px">Aucune tenue en attente de livraison</h3>
+        <p>Toutes les tenues prêtes ont déjà été livrées.</p>
+      </div>
+    </div>
+    {% else %}
+    <form method="post" action="{% url 'confirmer_livraison_groupee' %}">
+      {% csrf_token %}
+
+      <!-- Barre d'actions -->
+      <div style="background:white;border:1px solid var(--border);border-radius:12px;padding:16px 20px;margin-bottom:16px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px">
+        <div style="display:flex;align-items:center;gap:12px">
+          <input type="checkbox" id="select-all" style="width:18px;height:18px;cursor:pointer">
+          <label for="select-all" style="font-weight:600;cursor:pointer">Tout sélectionner</label>
+          <span id="count-label" style="color:var(--text-muted);font-size:.875rem">(0 sélectionné)</span>
+        </div>
+        <button type="submit" class="btn btn-success btn-lg" id="confirm-btn" disabled>
+          🚚 Confirmer la livraison
+        </button>
+      </div>
+
+      <!-- Liste des fiches -->
+      <div style="display:flex;flex-direction:column;gap:10px">
+        {% for fiche in fiches_pretes %}
+        <label style="display:flex;align-items:center;gap:16px;background:white;border:1.5px solid var(--border);border-radius:12px;padding:16px 20px;cursor:pointer;transition:all .15s"
+               class="fiche-row">
+          <input type="checkbox" name="fiche_ids" value="{{ fiche.pk }}"
+                 class="fiche-check"
+                 style="width:20px;height:20px;cursor:pointer;flex-shrink:0">
+
+          <!-- Avatar -->
+          <div style="width:44px;height:44px;border-radius:50%;background:var(--primary);color:white;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:1rem;flex-shrink:0">
+            {{ fiche.user.prenom|first|upper }}{{ fiche.user.nom|first|upper }}
+          </div>
+
+          <!-- Info agent -->
+          <div style="flex:1">
+            <div style="font-weight:700;font-size:1rem">{{ fiche.user.get_full_name }}</div>
+            <div style="color:var(--text-muted);font-size:.8rem">
+              {{ fiche.user.matricule }} · {{ fiche.user.service }}
+            </div>
+          </div>
+
+          <!-- Équipement -->
+          <div style="text-align:center;min-width:160px">
+            <div style="font-weight:600;font-size:.9rem">{{ fiche.get_type_equipement_display }}</div>
+            <div style="color:var(--text-muted);font-size:.75rem">Prêt depuis {{ fiche.updated_at|date:"d/m/Y" }}</div>
+          </div>
+
+          <!-- Badge -->
+          <span class="badge badge-teal">📦 Prêt</span>
+        </label>
+        {% endfor %}
+      </div>
+
+    </form>
+    {% endif %}
+  </div>
+</div>
+
+{% block extra_js %}
+<script>
+const checkboxes = document.querySelectorAll('.fiche-check');
+const selectAll  = document.getElementById('select-all');
+const countLabel = document.getElementById('count-label');
+const confirmBtn = document.getElementById('confirm-btn');
+const rows       = document.querySelectorAll('.fiche-row');
+
+function updateUI() {
+  const checked = document.querySelectorAll('.fiche-check:checked').length;
+  countLabel.textContent = `(${checked} sélectionné${checked > 1 ? 's' : ''})`;
+  confirmBtn.disabled = checked === 0;
+  confirmBtn.textContent = checked > 0
+    ? `🚚 Confirmer la livraison (${checked})`
+    : '🚚 Confirmer la livraison';
+  selectAll.checked = checked === checkboxes.length && checkboxes.length > 0;
+  selectAll.indeterminate = checked > 0 && checked < checkboxes.length;
+}
+
+checkboxes.forEach((cb, i) => {
+  cb.addEventListener('change', () => {
+    rows[i].style.borderColor = cb.checked ? 'var(--primary)' : 'var(--border)';
+    rows[i].style.background  = cb.checked ? '#eef4ff' : 'white';
+    updateUI();
+  });
+});
+
+selectAll.addEventListener('change', () => {
+  checkboxes.forEach((cb, i) => {
+    cb.checked = selectAll.checked;
+    rows[i].style.borderColor = cb.checked ? 'var(--primary)' : 'var(--border)';
+    rows[i].style.background  = cb.checked ? '#eef4ff' : 'white';
+  });
+  updateUI();
+});
+</script>
+{% endblock %}
+{% endblock %}

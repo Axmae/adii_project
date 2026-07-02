@@ -1,0 +1,66 @@
+{% extends 'base.html' %}
+{% block title %}Technicien — ADII{% endblock %}
+{% block content %}
+<div class="container">
+  <div class="page-header" style="display:flex;justify-content:space-between;align-items:flex-end;flex-wrap:wrap;gap:12px">
+    <div>
+      <h1 class="page-title">🔧 Espace Technicien</h1>
+      <p class="page-subtitle">Fiches validées et en cours de production</p>
+    </div>
+    <a href="{% url 'stock_list' %}" class="btn btn-outline">📦 Gérer le stock</a>
+  </div>
+  <div class="main-content">
+    {% if not measurements %}
+    <div class="card">
+      <div class="empty-state">
+        <div class="empty-icon">✅</div>
+        <h3>Aucune fiche à traiter</h3>
+        <p>Toutes les demandes sont à jour.</p>
+      </div>
+    </div>
+    {% else %}
+    <div class="card">
+      <div class="card-header"><span class="card-title">📋 Fiches à traiter ({{ measurements.count }})</span></div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Agent</th><th>Équipement</th><th>Mesures</th><th>Statut</th><th>Action</th></tr></thead>
+          <tbody>
+            {% for m in measurements %}
+            <tr>
+              <td>
+                <strong>{{ m.user.get_full_name }}</strong><br>
+                <span style="color:var(--text-muted);font-size:.8rem">{{ m.user.matricule }} · {{ m.user.service }}</span>
+              </td>
+              <td>{{ m.get_type_equipement_display }}</td>
+              <td style="font-size:.8rem;color:var(--text-muted)">
+                P:{{ m.tour_poitrine }}cm T:{{ m.tour_taille }}cm E:{{ m.epaules }}cm
+              </td>
+              <td><span class="badge badge-{{ m.status_color }}">{{ m.get_status_display }}</span></td>
+              <td>
+                {% if m.status == 'valide' %}
+                <form method="post" action="{% url 'update_status' m.pk %}">
+                  {% csrf_token %}<input type="hidden" name="status" value="en_production">
+                  <button type="submit" class="btn btn-primary btn-sm">▶ Démarrer production</button>
+                </form>
+                {% elif m.status == 'en_production' %}
+                <form method="post" action="{% url 'update_status' m.pk %}">
+                  {% csrf_token %}<input type="hidden" name="status" value="pret">
+                  <button type="submit" class="btn btn-success btn-sm">✅ Marquer prêt</button>
+                </form>
+                {% elif m.status == 'pret' %}
+                <form method="post" action="{% url 'update_status' m.pk %}">
+                  {% csrf_token %}<input type="hidden" name="status" value="livre">
+                  <button type="submit" class="btn btn-accent btn-sm">📦 Confirmer livraison</button>
+                </form>
+                {% endif %}
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

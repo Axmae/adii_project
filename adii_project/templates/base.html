@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{% block title %}ADII — Gestion d'habillement{% endblock %}</title>
+  {% load static %}
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="{% static 'css/adii.css' %}">
+  {% block extra_css %}{% endblock %}
+</head>
+<body>
+
+{% if user.is_authenticated %}
+<nav class="navbar">
+  <a class="navbar-brand" href="/">
+    <span class="logo-badge">ADII</span>
+    <span>Gestion d'habillement</span>
+  </a>
+  <div class="navbar-nav">
+
+    {% if user.role == 'agent' %}
+      <a class="nav-link" href="{% url 'agent_dashboard' %}">🗂 Mes dossiers</a>
+      <a class="nav-link" href="{% url 'create_measurement' %}">➕ Nouvelle fiche</a>
+
+    {% elif user.role == 'secretaire' %}
+      <a class="nav-link" href="{% url 'secretaire_dashboard' %}">📋 Fiches agents</a>
+      <a class="nav-link" href="{% url 'secretaire_create' %}">➕ Nouvelle fiche</a>
+      <a class="nav-link" href="{% url 'avancement_groupe' %}">📊 Avancement groupé</a>
+
+    {% elif user.role == 'admin' %}
+      <a class="nav-link" href="{% url 'admin_dashboard' %}">📊 Tableau de bord</a>
+      <a class="nav-link" href="{% url 'avancement_groupe' %}">📋 Avancement groupé</a>
+      <a class="nav-link" href="{% url 'livraison_groupee' %}">🚚 Livraisons</a>
+      <a class="nav-link" href="{% url 'manage_users' %}">👥 Utilisateurs</a>
+      <a class="nav-link" href="{% url 'stock_list' %}">📦 Stock</a>
+
+    {% elif user.role == 'technicien' %}
+      <a class="nav-link" href="{% url 'tech_dashboard' %}">🔧 Fiches</a>
+      <a class="nav-link" href="{% url 'stock_list' %}">📦 Stock</a>
+    {% endif %}
+
+    <div class="nav-divider"></div>
+
+    <div class="dropdown notif-btn">
+      <button class="nav-link" data-toggle="notif" style="background:none;border:none;cursor:pointer">
+        🔔
+        {% if unread_count > 0 %}<span class="notif-badge">{{ unread_count }}</span>{% endif %}
+      </button>
+      <div class="dropdown-menu" id="notif-menu">
+        <div style="padding:12px 16px;font-weight:600;font-size:.875rem;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center">
+          Notifications
+          {% if unread_count > 0 %}
+          <a href="{% url 'mark_all_read' %}" style="font-size:.75rem;color:var(--primary);text-decoration:none">Tout lire</a>
+          {% endif %}
+        </div>
+        {% for n in unread_notifications %}
+        <a href="{% url 'mark_read' n.pk %}" class="dropdown-item {% if not n.read %}unread{% endif %}">
+          <span class="notif-dot"></span>
+          <div>
+            <div style="font-weight:600">{{ n.title }}</div>
+            <div style="color:var(--text-muted);font-size:.8rem;margin-top:2px">{{ n.message|truncatechars:60 }}</div>
+            <div style="color:var(--text-muted);font-size:.75rem;margin-top:2px">{{ n.created_at|timesince }}</div>
+          </div>
+        </a>
+        {% empty %}
+        <div style="padding:20px;text-align:center;color:var(--text-muted);font-size:.875rem">Aucune notification</div>
+        {% endfor %}
+        <a href="{% url 'notifications' %}" style="display:block;text-align:center;padding:10px;font-size:.8rem;color:var(--primary);border-top:1px solid var(--border);text-decoration:none">Voir tout</a>
+      </div>
+    </div>
+
+    <div class="nav-divider"></div>
+    <a class="nav-link" href="{% url 'profile' %}">👤 {{ user.get_full_name|default:user.username }}</a>
+    <a class="nav-link" href="{% url 'logout' %}">🚪 Déconnexion</a>
+  </div>
+</nav>
+{% endif %}
+
+{% if messages %}
+<div style="max-width:1200px;margin:12px auto;padding:0 24px">
+  {% for msg in messages %}
+  <div class="alert alert-auto alert-{% if msg.tags == 'error' %}error{% elif msg.tags == 'success' %}success{% elif msg.tags == 'warning' %}warning{% else %}info{% endif %}" style="transition:opacity .5s">
+    {{ msg }}
+  </div>
+  {% endfor %}
+</div>
+{% endif %}
+
+{% block content %}{% endblock %}
+
+<footer class="footer">© 2026 ADII — Administration des Douanes et Impôts Indirects — Tous droits réservés.</footer>
+
+{% load static %}
+<script src="{% static 'js/adii.js' %}"></script>
+{% block extra_js %}{% endblock %}
+</body>
+</html>
