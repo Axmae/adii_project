@@ -1,2 +1,4 @@
 Django>=4.2,<5.0
 Pillow>=10.0
+psycopg2
+psycopg2-binary
