@@ -1,0 +1,123 @@
+{% extends 'base.html' %}
+{% block title %}Historique par agent — ADII{% endblock %}
+{% block content %}
+<div class="container">
+  <div class="page-header">
+    <h1 class="page-title">📜 Historique par agent</h1>
+    <p class="page-subtitle">Consultez les demandes et retours d'effets par agent</p>
+  </div>
+  <div class="main-content">
+
+    <!-- Filtres -->
+    <div class="card" style="margin-bottom:20px">
+      <form method="get" style="display:flex;gap:12px;flex-wrap:wrap;align-items:flex-end">
+        <div class="form-group" style="margin-bottom:0;flex:1;min-width:180px">
+          <label class="form-label">Agent</label>
+          <select name="agent" class="form-input">
+            <option value="">Tous les agents</option>
+            {% for a in agents %}
+            <option value="{{ a.pk }}" {% if agent_filter == a.pk|stringformat:'s' %}selected{% endif %}>
+              {{ a.get_full_name }} ({{ a.matricule|default:'-' }})
+            </option>
+            {% endfor %}
+          </select>
+        </div>
+        <div class="form-group" style="margin-bottom:0;flex:1;min-width:140px">
+          <label class="form-label">Date début</label>
+          <input type="date" name="date_debut" class="form-input" value="{{ date_debut }}">
+        </div>
+        <div class="form-group" style="margin-bottom:0;flex:1;min-width:140px">
+          <label class="form-label">Date fin</label>
+          <input type="date" name="date_fin" class="form-input" value="{{ date_fin }}">
+        </div>
+        <button type="submit" class="btn btn-primary">Filtrer</button>
+        <a href="{% url 'historique_agents' %}" class="btn btn-outline">Réinitialiser</a>
+      </form>
+    </div>
+
+    <!-- Boutons export -->
+    <div style="display:flex;gap:10px;margin-bottom:20px;justify-content:flex-end">
+      <a href="{% url 'export_historique_excel' %}?{{ request.GET.urlencode }}" class="btn btn-success">📊 Export Excel</a>
+      <a href="{% url 'export_historique_pdf' %}?{{ request.GET.urlencode }}" class="btn btn-danger">📄 Export PDF</a>
+    </div>
+
+    <!-- Résultats -->
+    {% for h in historiques %}
+    <div class="card" style="margin-bottom:20px">
+      <div class="card-header">
+        <span class="card-title">
+          👤 {{ h.agent.get_full_name }}
+          <span style="color:var(--text-muted);font-weight:400;font-size:.85rem">
+            · {{ h.agent.matricule|default:'N/A' }} · {{ h.agent.service|default:'N/A' }}
+          </span>
+        </span>
+        <div style="display:flex;gap:8px;font-size:.8rem">
+          <span class="badge badge-blue">{{ h.measurements|length }} demande(s)</span>
+          <span class="badge badge-red">{{ h.retours|length }} retour(s)</span>
+        </div>
+      </div>
+
+      {% if h.measurements %}
+      <div class="table-wrap" style="margin-bottom:12px">
+        <table>
+          <thead>
+            <tr>
+              <th>Date</th><th>Type équipement</th><th>Statut</th><th>Rempli par</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for m in h.measurements %}
+            <tr>
+              <td style="color:var(--text-muted)">{{ m.created_at|date:"d/m/Y" }}</td>
+              <td>{{ m.get_type_equipement_display }}</td>
+              <td><span class="badge badge-{{ m.status_color }}">{{ m.get_status_display }}</span></td>
+              <td style="color:var(--text-muted)">{% if m.rempli_par %}{{ m.rempli_par.get_full_name|default:m.rempli_par.username }}{% else %}—{% endif %}</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+      {% endif %}
+
+      {% if h.retours %}
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Date</th><th>Type équipement</th><th>Quantité</th><th>Motif</th><th>Notes</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for r in h.retours %}
+            <tr>
+              <td style="color:var(--text-muted)">{{ r.created_at|date:"d/m/Y" }}</td>
+              <td>{{ r.get_type_equipement_display }}</td>
+              <td><strong>{{ r.quantite }}</strong></td>
+              <td><span class="badge badge-red">{{ r.get_motif_display }}</span></td>
+              <td style="color:var(--text-muted);max-width:200px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ r.notes|default:'—' }}</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+      {% endif %}
+
+      {% if not h.measurements and not h.retours %}
+      <div style="text-align:center;padding:24px;color:var(--text-muted)">
+        Aucune donnée pour cet agent.
+      </div>
+      {% endif %}
+    </div>
+    {% empty %}
+    <div class="card">
+      <div class="empty-state">
+        <div class="empty-icon">📭</div>
+        <h3 style="margin-bottom:8px">Aucun résultat</h3>
+        <p>Essayez de modifier les filtres.</p>
+      </div>
+    </div>
+    {% endfor %}
+
+  </div>
+</div>
+{% endblock %}

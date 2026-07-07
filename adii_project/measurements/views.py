@@ -1,9 +1,14 @@
+import io
+import urllib.parse
+
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
-from django.db.models import F
-from .models import Measurement
-from .forms import MeasurementForm, AdminNoteForm
+from django.db.models import F, Q, Count
+from django.http import HttpResponse
+from django.template.loader import render_to_string
+from .models import Measurement, RetourEffet
+from .forms import MeasurementForm, AdminNoteForm, RetourEffetForm
 from notifications.utils import create_notification
 from stock.models import StockItem, StockMovement
 
@@ -23,7 +28,11 @@ def role_required(roles):
 @login_required
 def agent_dashboard(request):
     measurements = Measurement.objects.filter(user=request.user)
-    return render(request, 'agent/dashboard.html', {'measurements': measurements})
+    retours = RetourEffet.objects.filter(agent=request.user)
+    return render(request, 'agent/dashboard.html', {
+        'measurements': measurements,
+        'retours': retours,
+    })
 
 @login_required
 def create_measurement(request):
@@ -379,6 +388,280 @@ def update_status(request, pk):
             )
         messages.success(request, f"Statut mis à jour : {m.get_status_display()}")
     return redirect('tech_dashboard')
+
+# ─── RETOUR D'EFFETS (Agent) ──────────────────────────────
+@login_required
+def enregistrer_retour(request):
+    if request.user.role != 'agent':
+        return redirect('home')
+    if request.method == 'POST':
+        form = RetourEffetForm(request.POST)
+        if form.is_valid():
+            r = form.save(commit=False)
+            r.agent = request.user
+            r.created_by = request.user
+            r.save()
+            from accounts.models import User
+            for admin in User.objects.filter(role='admin'):
+                create_notification(
+                    admin,
+                    'Retour d\'effet déclaré',
+                    f"{request.user.get_full_name()} a retourné {r.quantite} x {r.get_type_equipement_display()} pour {r.get_motif_display()}.",
+                    category='stock'
+                )
+            messages.success(request, "Retour enregistré avec succès.")
+            return redirect('agent_dashboard')
+    else:
+        form = RetourEffetForm()
+    return render(request, 'agent/retour.html', {'form': form})
+
+
+# ─── HISTORIQUE PAR AGENT (Admin) ─────────────────────────
+@role_required(['admin'])
+def historique_agents(request):
+    from accounts.models import User
+    agents = User.objects.filter(role='agent').order_by('nom')
+    agent_filter = request.GET.get('agent', '')
+    date_debut = request.GET.get('date_debut', '')
+    date_fin = request.GET.get('date_fin', '')
+
+    if agent_filter:
+        agents = agents.filter(pk=agent_filter)
+
+    historiques = []
+    for agent in agents:
+        measurements = Measurement.objects.filter(user=agent)
+        retours = RetourEffet.objects.filter(agent=agent)
+        if date_debut:
+            measurements = measurements.filter(created_at__date__gte=date_debut)
+            retours = retours.filter(created_at__date__gte=date_debut)
+        if date_fin:
+            measurements = measurements.filter(created_at__date__lte=date_fin)
+            retours = retours.filter(created_at__date__lte=date_fin)
+        historiques.append({
+            'agent': agent,
+            'measurements': measurements,
+            'retours': retours,
+        })
+
+    return render(request, 'admin_panel/historique.html', {
+        'historiques': historiques,
+        'agents': User.objects.filter(role='agent').order_by('nom'),
+        'agent_filter': agent_filter,
+        'date_debut': date_debut,
+        'date_fin': date_fin,
+    })
+
+
+# ─── EXPORT EXCEL ─────────────────────────────────────────
+@role_required(['admin'])
+def export_historique_excel(request):
+    from accounts.models import User
+    import openpyxl
+    from openpyxl.styles import Font, PatternFill, Alignment, Border, Side
+
+    wb = openpyxl.Workbook()
+    ws = wb.active
+    ws.title = "Historique par agent"
+
+    header_font = Font(bold=True, color="FFFFFF", size=11)
+    header_fill = PatternFill(start_color="1A3A6B", end_color="1A3A6B", fill_type="solid")
+    header_align = Alignment(horizontal="center", vertical="center")
+    thin_border = Border(
+        left=Side(style='thin'), right=Side(style='thin'),
+        top=Side(style='thin'), bottom=Side(style='thin'),
+    )
+
+    headers = [
+        "Agent", "Matricule", "Service",
+        "Date demande", "Équipement demandé", "Statut demande",
+        "Date retour", "Équipement retourné", "Quantité retour", "Motif retour"
+    ]
+    for col, h in enumerate(headers, 1):
+        cell = ws.cell(row=1, column=col, value=h)
+        cell.font = header_font
+        cell.fill = header_fill
+        cell.alignment = header_align
+        cell.border = thin_border
+
+    row = 2
+    agent_filter = request.GET.get('agent', '')
+    date_debut = request.GET.get('date_debut', '')
+    date_fin = request.GET.get('date_fin', '')
+
+    agents_qs = User.objects.filter(role='agent').order_by('nom')
+    if agent_filter:
+        agents_qs = agents_qs.filter(pk=agent_filter)
+
+    for agent in agents_qs:
+        measurements = Measurement.objects.filter(user=agent)
+        retours = RetourEffet.objects.filter(agent=agent)
+        if date_debut:
+            measurements = measurements.filter(created_at__date__gte=date_debut)
+            retours = retours.filter(created_at__date__gte=date_debut)
+        if date_fin:
+            measurements = measurements.filter(created_at__date__lte=date_fin)
+            retours = retours.filter(created_at__date__lte=date_fin)
+
+        measurements = list(measurements)
+        retours = list(retours)
+        max_rows = max(len(measurements), len(retours), 1)
+        for i in range(max_rows):
+            m = measurements[i] if i < len(measurements) else None
+            r = retours[i] if i < len(retours) else None
+            ws.cell(row=row, column=1, value=agent.get_full_name()).border = thin_border
+            ws.cell(row=row, column=2, value=agent.matricule or '').border = thin_border
+            ws.cell(row=row, column=3, value=agent.service or '').border = thin_border
+            if m:
+                ws.cell(row=row, column=4, value=m.created_at.strftime('%d/%m/%Y')).border = thin_border
+                ws.cell(row=row, column=5, value=m.get_type_equipement_display()).border = thin_border
+                ws.cell(row=row, column=6, value=m.get_status_display()).border = thin_border
+            if r:
+                ws.cell(row=row, column=7, value=r.created_at.strftime('%d/%m/%Y')).border = thin_border
+                ws.cell(row=row, column=8, value=r.get_type_equipement_display()).border = thin_border
+                ws.cell(row=row, column=9, value=r.quantite).border = thin_border
+                ws.cell(row=row, column=10, value=r.get_motif_display()).border = thin_border
+            row += 1
+
+    for col in range(1, 11):
+        ws.column_dimensions[openpyxl.utils.get_column_letter(col)].width = 20
+
+    response = HttpResponse(
+        content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+    )
+    filename = "historique_agents.xlsx"
+    response['Content-Disposition'] = f'attachment; filename="{filename}"'
+    wb.save(response)
+    return response
+
+
+# ─── EXPORT PDF ───────────────────────────────────────────
+def _render_pdf_reportlab(historiques, agents, agent_filter, date_debut, date_fin):
+    from reportlab.lib.pagesizes import A4, landscape
+    from reportlab.lib import colors
+    from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
+    from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, Spacer
+
+    buffer = io.BytesIO()
+    doc = SimpleDocTemplate(buffer, pagesize=landscape(A4), title="Historique par agent")
+    styles = getSampleStyleSheet()
+    elements = []
+
+    title_style = ParagraphStyle('Title2', parent=styles['Title'], fontSize=16, spaceAfter=6)
+    elements.append(Paragraph("ADII — Historique par agent", title_style))
+    subtitle = f"Filtres: {'Agent spécifique' if agent_filter else 'Tous les agents'}"
+    if date_debut or date_fin:
+        subtitle += f" | Du {date_debut or '…'} au {date_fin or '…'}"
+    elements.append(Paragraph(subtitle, styles['Normal']))
+    elements.append(Spacer(1, 12))
+
+    for h in historiques:
+        agent = h['agent']
+        measurements = list(h['measurements'])
+        retours = list(h['retours'])
+        if not measurements and not retours:
+            continue
+
+        elements.append(Paragraph(
+            f"<b>{agent.get_full_name()}</b> — {agent.matricule or 'N/A'} — {agent.service or 'N/A'}",
+            styles['Heading2']
+        ))
+
+        if measurements:
+            data = [["Date", "Équipement", "Statut"]]
+            for m in measurements:
+                data.append([
+                    m.created_at.strftime('%d/%m/%Y'),
+                    m.get_type_equipement_display(),
+                    m.get_status_display()
+                ])
+            table = Table(data, colWidths=[80, 150, 120])
+            table.setStyle(TableStyle([
+                ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#1A3A6B')),
+                ('TEXTCOLOR', (0, 0), (-1, 0), colors.white),
+                ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
+                ('FONTSIZE', (0, 0), (-1, -1), 8),
+                ('GRID', (0, 0), (-1, -1), 0.5, colors.grey),
+                ('ROWBACKGROUNDS', (0, 1), (-1, -1), [colors.white, colors.HexColor('#F0F4F8')]),
+            ]))
+            elements.append(Paragraph("<b>Demandes:</b>", styles['Normal']))
+            elements.append(table)
+            elements.append(Spacer(1, 8))
+
+        if retours:
+            data = [["Date", "Équipement", "Qté", "Motif"]]
+            for r in retours:
+                data.append([
+                    r.created_at.strftime('%d/%m/%Y'),
+                    r.get_type_equipement_display(),
+                    str(r.quantite),
+                    r.get_motif_display()
+                ])
+            table = Table(data, colWidths=[80, 150, 60, 100])
+            table.setStyle(TableStyle([
+                ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#991B1B')),
+                ('TEXTCOLOR', (0, 0), (-1, 0), colors.white),
+                ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
+                ('FONTSIZE', (0, 0), (-1, -1), 8),
+                ('GRID', (0, 0), (-1, -1), 0.5, colors.grey),
+                ('ROWBACKGROUNDS', (0, 1), (-1, -1), [colors.white, colors.HexColor('#FEF2F2')]),
+            ]))
+            elements.append(Paragraph("<b>Retours:</b>", styles['Normal']))
+            elements.append(table)
+            elements.append(Spacer(1, 8))
+
+        elements.append(Spacer(1, 12))
+
+    doc.build(elements)
+    buffer.seek(0)
+    return buffer
+
+
+@role_required(['admin'])
+def export_historique_pdf(request):
+    from accounts.models import User
+    agent_filter = request.GET.get('agent', '')
+    date_debut = request.GET.get('date_debut', '')
+    date_fin = request.GET.get('date_fin', '')
+
+    agents_qs = User.objects.filter(role='agent').order_by('nom')
+    if agent_filter:
+        agents_qs = agents_qs.filter(pk=agent_filter)
+
+    historiques = []
+    for agent in agents_qs:
+        measurements = Measurement.objects.filter(user=agent)
+        retours = RetourEffet.objects.filter(agent=agent)
+        if date_debut:
+            measurements = measurements.filter(created_at__date__gte=date_debut)
+            retours = retours.filter(created_at__date__gte=date_debut)
+        if date_fin:
+            measurements = measurements.filter(created_at__date__lte=date_fin)
+            retours = retours.filter(created_at__date__lte=date_fin)
+        historiques.append({
+            'agent': agent,
+            'measurements': measurements,
+            'retours': retours,
+        })
+
+    try:
+        import weasyprint
+        html = render_to_string('admin_panel/historique_pdf.html', {
+            'historiques': historiques,
+            'agent_filter': agent_filter,
+            'date_debut': date_debut,
+            'date_fin': date_fin,
+        })
+        pdf = weasyprint.HTML(string=html).write_pdf()
+        response = HttpResponse(pdf, content_type='application/pdf')
+        response['Content-Disposition'] = 'attachment; filename="historique_agents.pdf"'
+        return response
+    except (ImportError, OSError):
+        buffer = _render_pdf_reportlab(historiques, agents_qs, agent_filter, date_debut, date_fin)
+        response = HttpResponse(buffer, content_type='application/pdf')
+        response['Content-Disposition'] = 'attachment; filename="historique_agents.pdf"'
+        return response
+
 
 @login_required
 def measurement_detail(request, pk):

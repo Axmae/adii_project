@@ -42,6 +42,37 @@
       </div>
     </div>
     {% endif %}
+
+    <!-- Retours d'effets -->
+    <div class="card" style="margin-top:20px">
+      <div class="card-header">
+        <span class="card-title">🔄 Mes retours d'effets ({{ retours.count }})</span>
+        <a href="{% url 'enregistrer_retour' %}" class="btn btn-outline btn-sm">➕ Nouveau retour</a>
+      </div>
+      {% if retours %}
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Date</th><th>Équipement</th><th>Quantité</th><th>Motif</th><th>Notes</th></tr></thead>
+          <tbody>
+            {% for r in retours %}
+            <tr>
+              <td style="color:var(--text-muted)">{{ r.created_at|date:"d/m/Y" }}</td>
+              <td>{{ r.get_type_equipement_display }}</td>
+              <td><strong>{{ r.quantite }}</strong></td>
+              <td><span class="badge badge-red">{{ r.get_motif_display }}</span></td>
+              <td style="color:var(--text-muted);max-width:200px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ r.notes|default:'—' }}</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+      {% else %}
+      <div style="text-align:center;padding:24px;color:var(--text-muted)">
+        Aucun retour d'effet enregistré.
+      </div>
+      {% endif %}
+    </div>
+
   </div>
 </div>
 {% endblock %}

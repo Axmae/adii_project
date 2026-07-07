@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <style>
+    @page { size: A4 landscape; margin: 1.5cm; }
+    body { font-family: Helvetica, Arial, sans-serif; font-size: 10pt; color: #1e293b; }
+    h1 { font-size: 18pt; color: #1a3a6b; margin-bottom: 4px; }
+    .subtitle { color: #64748b; font-size: 9pt; margin-bottom: 20px; }
+    .agent-section { margin-bottom: 24px; page-break-inside: avoid; }
+    .agent-name { font-size: 13pt; font-weight: bold; color: #1a3a6b; margin-bottom: 4px; }
+    .agent-info { font-size: 8pt; color: #64748b; margin-bottom: 8px; }
+    h3 { font-size: 10pt; margin: 8px 0 4px; color: #334155; }
+    table { width: 100%; border-collapse: collapse; margin-bottom: 8px; font-size: 8pt; }
+    th { background: #1a3a6b; color: white; padding: 5px 8px; text-align: left; font-weight: bold; }
+    td { padding: 4px 8px; border-bottom: 1px solid #e2e8f0; }
+    tr:nth-child(even) td { background: #f8fafc; }
+    .retour th { background: #991b1b; }
+    .badge { padding: 1px 6px; border-radius: 3px; font-size: 7pt; font-weight: bold; }
+    .empty { color: #94a3b8; font-style: italic; padding: 8px; }
+    .footer { margin-top: 16px; font-size: 7pt; color: #94a3b8; text-align: center; }
+  </style>
+</head>
+<body>
+  <h1>ADII — Historique par agent</h1>
+  <p class="subtitle">
+    Généré le {% now "d/m/Y H:i" %} ·
+    Filtres : {% if agent_filter %}Agent spécifique{% else %}Tous les agents{% endif %}
+    {% if date_debut or date_fin %} · Du {{ date_debut|default:'…' }} au {{ date_fin|default:'…' }}{% endif %}
+  </p>
+
+  {% for h in historiques %}
+  <div class="agent-section">
+    <div class="agent-name">{{ h.agent.get_full_name }}</div>
+    <div class="agent-info">Matricule : {{ h.agent.matricule|default:'N/A' }} · Service : {{ h.agent.service|default:'N/A' }}</div>
+
+    {% if h.measurements %}
+    <h3>Demandes ({{ h.measurements|length }})</h3>
+    <table>
+      <thead><tr><th>Date</th><th>Équipement</th><th>Statut</th></tr></thead>
+      <tbody>
+        {% for m in h.measurements %}
+        <tr>
+          <td>{{ m.created_at|date:"d/m/Y" }}</td>
+          <td>{{ m.get_type_equipement_display }}</td>
+          <td>{{ m.get_status_display }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    {% endif %}
+
+    {% if h.retours %}
+    <h3>Retours ({{ h.retours|length }})</h3>
+    <table class="retour">
+      <thead><tr><th>Date</th><th>Équipement</th><th>Quantité</th><th>Motif</th><th>Notes</th></tr></thead>
+      <tbody>
+        {% for r in h.retours %}
+        <tr>
+          <td>{{ r.created_at|date:"d/m/Y" }}</td>
+          <td>{{ r.get_type_equipement_display }}</td>
+          <td>{{ r.quantite }}</td>
+          <td>{{ r.get_motif_display }}</td>
+          <td>{{ r.notes|default:'—' }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    {% endif %}
+
+    {% if not h.measurements and not h.retours %}
+    <div class="empty">Aucune donnée.</div>
+    {% endif %}
+  </div>
+  {% endfor %}
+
+  <div class="footer">ADII — Administration des Douanes et Impôts Indirects — Document généré automatiquement</div>
+</body>
+</html>

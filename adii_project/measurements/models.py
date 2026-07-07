@@ -1,6 +1,49 @@
 from django.db import models
 from django.conf import settings
 
+
+class RetourEffet(models.Model):
+    MOTIF_CHOICES = [
+        ('destruction', 'Destruction'),
+        ('perte', 'Perte'),
+        ('usure', 'Usure normale'),
+        ('autre', 'Autre'),
+    ]
+    TYPE_CHOICES = [
+        ('uniforme_ete', 'Uniforme été'),
+        ('uniforme_hiver', 'Uniforme hiver'),
+        ('veste', 'Veste'),
+        ('pantalon', 'Pantalon'),
+        ('chemise', 'Chemise'),
+        ('complet', 'Tenue complète'),
+    ]
+
+    agent = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name='retours'
+    )
+    type_equipement = models.CharField(max_length=50, choices=TYPE_CHOICES)
+    quantite = models.IntegerField()
+    motif = models.CharField(max_length=20, choices=MOTIF_CHOICES, default='destruction')
+    notes = models.TextField(blank=True, verbose_name='Notes')
+    created_at = models.DateTimeField(auto_now_add=True)
+    created_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True, blank=True,
+        related_name='retours_enregistres'
+    )
+
+    class Meta:
+        ordering = ['-created_at']
+        verbose_name = "Retour d'effet"
+        verbose_name_plural = "Retours d'effets"
+
+    def __str__(self):
+        return f"{self.agent.get_full_name()} — {self.get_type_equipement_display()} x{self.quantite} ({self.get_motif_display()})"
+
+
 class Measurement(models.Model):
     STATUS_CHOICES = [
         ('en_attente', 'En attente'),

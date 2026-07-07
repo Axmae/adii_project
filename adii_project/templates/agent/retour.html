@@ -1,0 +1,31 @@
+{% extends 'base.html' %}
+{% block title %}Retour d'effets — ADII{% endblock %}
+{% block content %}
+<div class="container">
+  <div class="page-header">
+    <h1 class="page-title">🔄 Retour d'anciens effets</h1>
+    <p class="page-subtitle">Déclarez le retour d'équipements usagés pour destruction ou recyclage</p>
+  </div>
+  <div class="main-content">
+    <div class="card" style="max-width:560px">
+      <div class="card-header"><span class="card-title">📋 Formulaire de retour</span></div>
+      <form method="post">
+        {% csrf_token %}
+        {% for field in form %}
+        <div class="form-group">
+          <label class="form-label">{{ field.label }}</label>
+          {{ field }}
+          {% if field.errors %}
+          <div style="color:var(--danger);font-size:.8rem;margin-top:4px">{{ field.errors.0 }}</div>
+          {% endif %}
+        </div>
+        {% endfor %}
+        <div style="display:flex;gap:10px;margin-top:20px">
+          <button type="submit" class="btn btn-primary">Enregistrer le retour</button>
+          <a href="{% url 'agent_dashboard' %}" class="btn btn-outline">Annuler</a>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+{% endblock %}

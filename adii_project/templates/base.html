@@ -23,6 +23,7 @@
     {% if user.role == 'agent' %}
       <a class="nav-link" href="{% url 'agent_dashboard' %}">🗂 Mes dossiers</a>
       <a class="nav-link" href="{% url 'create_measurement' %}">➕ Nouvelle fiche</a>
+      <a class="nav-link" href="{% url 'enregistrer_retour' %}">🔄 Retour effets</a>
 
     {% elif user.role == 'secretaire' %}
       <a class="nav-link" href="{% url 'secretaire_dashboard' %}">📋 Fiches agents</a>
@@ -33,6 +34,7 @@
       <a class="nav-link" href="{% url 'admin_dashboard' %}">📊 Tableau de bord</a>
       <a class="nav-link" href="{% url 'avancement_groupe' %}">📋 Avancement groupé</a>
       <a class="nav-link" href="{% url 'livraison_groupee' %}">🚚 Livraisons</a>
+      <a class="nav-link" href="{% url 'historique_agents' %}">📜 Historique</a>
       <a class="nav-link" href="{% url 'manage_users' %}">👥 Utilisateurs</a>
       <a class="nav-link" href="{% url 'stock_list' %}">📦 Stock</a>
 

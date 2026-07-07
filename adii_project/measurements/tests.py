@@ -1,7 +1,7 @@
 from django.test import TestCase, Client
 from django.urls import reverse
 from django.contrib.auth import get_user_model
-from .models import Measurement
+from .models import Measurement, RetourEffet
 from .views import role_required
 from stock.models import StockItem, StockMovement
 from notifications.models import Notification
@@ -624,3 +624,152 @@ class PermissionTest(TestCase):
         self.client.login(username='tech@test.com', password='pass')
         response = self.client.get(reverse('admin_dashboard'))
         self.assertRedirects(response, reverse('home'))
+
+
+# ─── RETOUR EFFET ────────────────────────────────────────
+
+class RetourEffetModelTest(TestCase):
+    def setUp(self):
+        self.agent = UserModel.objects.create_user(
+            username='agent@test.com', password='pass', role='agent',
+            nom='Dupont', prenom='Jean'
+        )
+        self.retour = RetourEffet.objects.create(
+            agent=self.agent, type_equipement='veste',
+            quantite=2, motif='destruction',
+            notes='Usagé', created_by=self.agent
+        )
+
+    def test_creation(self):
+        self.assertEqual(self.retour.quantite, 2)
+        self.assertEqual(self.retour.motif, 'destruction')
+        self.assertIsNotNone(self.retour.created_at)
+
+    def test_str(self):
+        expected = "Jean Dupont — Veste x2 (Destruction)"
+        self.assertEqual(str(self.retour), expected)
+
+    def test_default_ordering(self):
+        r2 = RetourEffet.objects.create(
+            agent=self.agent, type_equipement='chemise',
+            quantite=1, motif='usure'
+        )
+        qs = RetourEffet.objects.all()
+        self.assertEqual(qs.first(), r2)
+
+
+class RetourEffetFormAgentFlowTest(TestCase):
+    def setUp(self):
+        self.client = Client()
+        self.agent = UserModel.objects.create_user(
+            username='agent@test.com', password='pass', role='agent',
+            nom='Dupont', prenom='Jean'
+        )
+        self.admin = UserModel.objects.create_user(
+            username='admin@test.com', password='pass', role='admin',
+            nom='Admin', prenom='Boss'
+        )
+        self.client.login(username='agent@test.com', password='pass')
+
+    def test_retour_page_get(self):
+        response = self.client.get(reverse('enregistrer_retour'))
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, 'agent/retour.html')
+
+    def test_retour_submit(self):
+        response = self.client.post(reverse('enregistrer_retour'), {
+            'type_equipement': 'veste',
+            'quantite': 3,
+            'motif': 'destruction',
+            'notes': 'Anciennes vestes',
+        })
+        self.assertRedirects(response, reverse('agent_dashboard'))
+        self.assertEqual(RetourEffet.objects.count(), 1)
+        r = RetourEffet.objects.first()
+        self.assertEqual(r.agent, self.agent)
+        self.assertEqual(r.quantite, 3)
+        self.assertEqual(r.motif, 'destruction')
+        self.assertEqual(r.created_by, self.agent)
+
+    def test_retour_notifies_admin(self):
+        self.client.post(reverse('enregistrer_retour'), {
+            'type_equipement': 'pantalon',
+            'quantite': 1,
+            'motif': 'usure',
+        })
+        notif = Notification.objects.filter(
+            user=self.admin, category='stock'
+        ).first()
+        self.assertIsNotNone(notif)
+        self.assertIn('retourné', notif.message)
+
+    def test_retour_agent_only(self):
+        self.client.logout()
+        self.client.login(username='admin@test.com', password='pass')
+        response = self.client.get(reverse('enregistrer_retour'))
+        self.assertRedirects(response, reverse('home'))
+
+
+# ─── HISTORIQUE AGENTS (Admin) ───────────────────────────
+
+class HistoriqueAgentsViewTest(TestCase):
+    def setUp(self):
+        self.client = Client()
+        self.admin = UserModel.objects.create_user(
+            username='admin@test.com', password='pass', role='admin',
+            nom='Admin', prenom='Boss'
+        )
+        self.agent = UserModel.objects.create_user(
+            username='agent@test.com', password='pass', role='agent',
+            nom='Dupont', prenom='Jean', matricule='A001', service='Prod'
+        )
+        self.m = Measurement.objects.create(
+            user=self.agent, rempli_par=self.agent, type_equipement='veste',
+            tour_poitrine=100, tour_taille=80, tour_hanches=90,
+            epaules=45, manche=60, entrejambe=75,
+        )
+        self.r = RetourEffet.objects.create(
+            agent=self.agent, type_equipement='chemise',
+            quantite=2, motif='destruction', created_by=self.agent
+        )
+        self.client.login(username='admin@test.com', password='pass')
+
+    def test_historique_page_get(self):
+        response = self.client.get(reverse('historique_agents'))
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, 'admin_panel/historique.html')
+
+    def test_historique_shows_agent_data(self):
+        response = self.client.get(reverse('historique_agents'))
+        self.assertContains(response, 'Jean Dupont')
+        self.assertContains(response, 'Veste')
+        self.assertContains(response, 'Chemise')
+
+    def test_historique_requires_admin(self):
+        self.client.logout()
+        self.client.login(username='agent@test.com', password='pass')
+        response = self.client.get(reverse('historique_agents'))
+        self.assertRedirects(response, reverse('home'))
+
+    def test_historique_filter_by_agent(self):
+        response = self.client.get(
+            reverse('historique_agents'),
+            {'agent': self.agent.pk}
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'Jean Dupont')
+
+    def test_historique_excel_export(self):
+        response = self.client.get(reverse('export_historique_excel'))
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(
+            response['Content-Type'],
+            'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+        )
+        self.assertIn('attachment', response['Content-Disposition'])
+
+    def test_historique_pdf_export(self):
+        response = self.client.get(reverse('export_historique_pdf'))
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response['Content-Type'], 'application/pdf')
+        self.assertIn('attachment', response['Content-Disposition'])

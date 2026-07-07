@@ -1,5 +1,5 @@
 from django import forms
-from .models import Measurement
+from .models import Measurement, RetourEffet
 
 FIELD_ATTRS = {'class': 'form-input', 'step': '0.5', 'min': '0'}
 
@@ -22,3 +22,15 @@ class AdminNoteForm(forms.ModelForm):
         model = Measurement
         fields = ['notes_admin']
         widgets = {'notes_admin': forms.Textarea(attrs={'class': 'form-input', 'rows': 3})}
+
+
+class RetourEffetForm(forms.ModelForm):
+    class Meta:
+        model = RetourEffet
+        fields = ['type_equipement', 'quantite', 'motif', 'notes']
+        widgets = {
+            'type_equipement': forms.Select(attrs={'class': 'form-input'}),
+            'quantite': forms.NumberInput(attrs={'class': 'form-input', 'min': '1'}),
+            'motif': forms.Select(attrs={'class': 'form-input'}),
+            'notes': forms.Textarea(attrs={'class': 'form-input', 'rows': 3, 'placeholder': 'Informations complémentaires...'}),
+        }
