@@ -457,75 +457,211 @@ def historique_agents(request):
 @role_required(['admin'])
 def export_historique_excel(request):
     from accounts.models import User
+    from datetime import datetime
     import openpyxl
-    from openpyxl.styles import Font, PatternFill, Alignment, Border, Side
+    from openpyxl.styles import Font, PatternFill, Alignment, Border, Side, NamedStyle
+    from openpyxl.utils import get_column_letter
 
     wb = openpyxl.Workbook()
     ws = wb.active
     ws.title = "Historique par agent"
 
-    header_font = Font(bold=True, color="FFFFFF", size=11)
-    header_fill = PatternFill(start_color="1A3A6B", end_color="1A3A6B", fill_type="solid")
-    header_align = Alignment(horizontal="center", vertical="center")
+    # ── Colors ──
+    navy_fill = PatternFill(start_color="1A3A6B", end_color="1A3A6B", fill_type="solid")
+    navy_dark_fill = PatternFill(start_color="0F2444", end_color="0F2444", fill_type="solid")
+    gold_fill = PatternFill(start_color="C8A84B", end_color="C8A84B", fill_type="solid")
+    light_gray_fill = PatternFill(start_color="F8FAFC", end_color="F8FAFC", fill_type="solid")
+    header_demande_fill = PatternFill(start_color="1A3A6B", end_color="1A3A6B", fill_type="solid")
+    header_retour_fill = PatternFill(start_color="991B1B", end_color="991B1B", fill_type="solid")
+    white_font = Font(bold=True, color="FFFFFF", size=9)
+    white_font_lg = Font(bold=True, color="FFFFFF", size=14)
+    white_font_sm = Font(bold=False, color="B0C4DE", size=8)
+    title_font = Font(bold=True, color="1A3A6B", size=12)
+    subtitle_font = Font(bold=False, color="64748B", size=8)
+    agent_font = Font(bold=True, color="1A3A6B", size=9)
+    data_font = Font(size=8.5)
     thin_border = Border(
-        left=Side(style='thin'), right=Side(style='thin'),
-        top=Side(style='thin'), bottom=Side(style='thin'),
+        left=Side(style='thin', color='CBD5E1'),
+        right=Side(style='thin', color='CBD5E1'),
+        top=Side(style='thin', color='CBD5E1'),
+        bottom=Side(style='thin', color='CBD5E1'),
     )
+    center_align = Alignment(horizontal="center", vertical="center")
+    left_align = Alignment(vertical="center")
 
-    headers = [
-        "Agent", "Matricule", "Service",
-        "Date demande", "Équipement demandé", "Statut demande",
-        "Date retour", "Équipement retourné", "Quantité retour", "Motif retour"
-    ]
-    for col, h in enumerate(headers, 1):
-        cell = ws.cell(row=1, column=col, value=h)
-        cell.font = header_font
-        cell.fill = header_fill
-        cell.alignment = header_align
+    # ── Header block (rows 1-3) ──
+    # Row 1: colored background bar
+    for col in range(1, 12):
+        cell = ws.cell(row=1, column=col)
+        cell.fill = navy_fill
         cell.border = thin_border
+    ws.merge_cells('A1:K1')
+    title_cell = ws.cell(row=1, column=1)
+    title_cell.value = "ADII — Administration des Douanes et Impôts Indirects"
+    title_cell.font = white_font_lg
+    title_cell.alignment = Alignment(horizontal="left", vertical="center")
+    # Gold accent bar
+    ws.row_dimensions[1].height = 32
 
-    row = 2
-    agent_filter = request.GET.get('agent', '')
+    # Row 2: subtitle
+    for col in range(1, 12):
+        cell = ws.cell(row=2, column=col)
+        cell.fill = navy_fill
+        cell.border = thin_border
+    ws.merge_cells('A2:K2')
+    sub_cell = ws.cell(row=2, column=1)
+    sub_cell.value = "GESTION D'HABILLEMENT — Rapport historique par agent"
+    sub_cell.font = white_font_sm
+    sub_cell.alignment = Alignment(horizontal="left", vertical="center")
+    ws.row_dimensions[2].height = 18
+
+    # Row 3: gold separator
+    for col in range(1, 12):
+        cell = ws.cell(row=3, column=col)
+        cell.fill = gold_fill
+        cell.border = thin_border
+    ws.row_dimensions[3].height = 4
+
+    # Row 4: report info
+    ws.merge_cells('A4:K4')
+    info_cell = ws.cell(row=4, column=1)
+    now_str = datetime.now().strftime('%d/%m/%Y %H:%M')
+    agent_filter_str = request.GET.get('agent', '')
     date_debut = request.GET.get('date_debut', '')
     date_fin = request.GET.get('date_fin', '')
+    filter_text = "Tous les agents"
+    if agent_filter_str:
+        filter_agent = User.objects.filter(pk=agent_filter_str).first()
+        if filter_agent:
+            filter_text = filter_agent.get_full_name()
+    info_cell.value = f"Généré le {now_str} — Filtre : {filter_text}"
+    if date_debut or date_fin:
+        info_cell.value += f" — Période : {date_debut or '...'} au {date_fin or '...'}"
+    info_cell.font = subtitle_font
+    info_cell.alignment = Alignment(horizontal="left", vertical="center")
+    ws.row_dimensions[4].height = 22
+
+    # Row 5: empty spacer
+    ws.row_dimensions[5].height = 6
+
+    # ── Data header row (row 6) ──
+    data_start_row = 6
+    demande_headers = ["Agent", "Matricule", "Service",
+                       "Date demande", "Type équipement", "Statut"]
+    retour_headers = ["Date retour", "Type équipement", "Quantité", "Motif retour", "Notes"]
+
+    # Demande headers (blue)
+    for col, h in enumerate(demande_headers, 1):
+        cell = ws.cell(row=data_start_row, column=col, value=h)
+        cell.font = Font(bold=True, color="FFFFFF", size=8)
+        cell.fill = header_demande_fill
+        cell.alignment = center_align
+        cell.border = thin_border
+
+    # Retour headers (red)
+    for col, h in enumerate(retour_headers, 7):
+        cell = ws.cell(row=data_start_row, column=col, value=h)
+        cell.font = Font(bold=True, color="FFFFFF", size=8)
+        cell.fill = header_retour_fill
+        cell.alignment = center_align
+        cell.border = thin_border
+
+    ws.row_dimensions[data_start_row].height = 22
+
+    # ── Data rows ──
+    row = data_start_row + 1
+    agent_filter_val = request.GET.get('agent', '')
+    date_debut_val = request.GET.get('date_debut', '')
+    date_fin_val = request.GET.get('date_fin', '')
 
     agents_qs = User.objects.filter(role='agent').order_by('nom')
-    if agent_filter:
-        agents_qs = agents_qs.filter(pk=agent_filter)
+    if agent_filter_val:
+        agents_qs = agents_qs.filter(pk=agent_filter_val)
 
     for agent in agents_qs:
         measurements = Measurement.objects.filter(user=agent)
         retours = RetourEffet.objects.filter(agent=agent)
-        if date_debut:
-            measurements = measurements.filter(created_at__date__gte=date_debut)
-            retours = retours.filter(created_at__date__gte=date_debut)
-        if date_fin:
-            measurements = measurements.filter(created_at__date__lte=date_fin)
-            retours = retours.filter(created_at__date__lte=date_fin)
+        if date_debut_val:
+            measurements = measurements.filter(created_at__date__gte=date_debut_val)
+            retours = retours.filter(created_at__date__gte=date_debut_val)
+        if date_fin_val:
+            measurements = measurements.filter(created_at__date__lte=date_fin_val)
+            retours = retours.filter(created_at__date__lte=date_fin_val)
 
         measurements = list(measurements)
         retours = list(retours)
         max_rows = max(len(measurements), len(retours), 1)
+
         for i in range(max_rows):
             m = measurements[i] if i < len(measurements) else None
             r = retours[i] if i < len(retours) else None
-            ws.cell(row=row, column=1, value=agent.get_full_name()).border = thin_border
-            ws.cell(row=row, column=2, value=agent.matricule or '').border = thin_border
-            ws.cell(row=row, column=3, value=agent.service or '').border = thin_border
+            is_even = (row % 2 == 0)
+
+            # Agent info (cols 1-3)
+            if i == 0:
+                ws.cell(row=row, column=1, value=agent.get_full_name()).font = agent_font
+                ws.cell(row=row, column=2, value=agent.matricule or '').font = data_font
+                ws.cell(row=row, column=3, value=agent.service or '').font = data_font
+            else:
+                ws.cell(row=row, column=1, value='').font = data_font
+                ws.cell(row=row, column=2, value='').font = data_font
+                ws.cell(row=row, column=3, value='').font = data_font
+
+            # Demande data (cols 4-6)
             if m:
-                ws.cell(row=row, column=4, value=m.created_at.strftime('%d/%m/%Y')).border = thin_border
-                ws.cell(row=row, column=5, value=m.get_type_equipement_display()).border = thin_border
-                ws.cell(row=row, column=6, value=m.get_status_display()).border = thin_border
+                ws.cell(row=row, column=4, value=m.created_at.strftime('%d/%m/%Y')).font = data_font
+                ws.cell(row=row, column=5, value=m.get_type_equipement_display()).font = data_font
+                ws.cell(row=row, column=6, value=m.get_status_display()).font = Font(size=8.5, bold=True,
+                    color='065F46' if m.status == 'livre' else
+                          '065F46' if m.status == 'pret' else
+                          '5B21B6' if m.status == 'en_production' else
+                          '1E40AF' if m.status == 'valide' else
+                          '991B1B' if m.status == 'refuse' else '92400E')
+            else:
+                for c in [4, 5, 6]:
+                    ws.cell(row=row, column=c, value='').font = data_font
+
+            # Retour data (cols 7-11)
             if r:
-                ws.cell(row=row, column=7, value=r.created_at.strftime('%d/%m/%Y')).border = thin_border
-                ws.cell(row=row, column=8, value=r.get_type_equipement_display()).border = thin_border
-                ws.cell(row=row, column=9, value=r.quantite).border = thin_border
-                ws.cell(row=row, column=10, value=r.get_motif_display()).border = thin_border
+                ws.cell(row=row, column=7, value=r.created_at.strftime('%d/%m/%Y')).font = data_font
+                ws.cell(row=row, column=8, value=r.get_type_equipement_display()).font = data_font
+                ws.cell(row=row, column=9, value=r.quantite).font = Font(size=8.5, bold=True)
+                ws.cell(row=row, column=10, value=r.get_motif_display()).font = Font(size=8.5,
+                    color='991B1B' if r.motif == 'destruction' else
+                          '92400E' if r.motif == 'perte' else
+                          '3730A3' if r.motif == 'usure' else '475569')
+                ws.cell(row=row, column=11, value=r.notes or '—').font = data_font
+            else:
+                for c in [7, 8, 9, 10, 11]:
+                    ws.cell(row=row, column=c, value='').font = data_font
+
+            # Borders and row shading
+            bg = light_gray_fill if is_even else PatternFill(fill_type=None)
+            for col in range(1, 12):
+                cell = ws.cell(row=row, column=col)
+                cell.border = thin_border
+                cell.alignment = left_align
+                if not (col == 6 and m):
+                    cell.fill = bg
+
+            ws.row_dimensions[row].height = 18
             row += 1
 
-    for col in range(1, 11):
-        ws.column_dimensions[openpyxl.utils.get_column_letter(col)].width = 20
+    # ── Column widths ──
+    col_widths = [22, 12, 14, 14, 18, 14, 14, 18, 10, 14, 20]
+    for i, w in enumerate(col_widths, 1):
+        ws.column_dimensions[get_column_letter(i)].width = w
 
+    # ── Freeze panes ──
+    ws.freeze_panes = f'A{data_start_row + 1}'
+
+    # ── Print setup ──
+    ws.sheet_properties.pageSetUpPr = openpyxl.worksheet.properties.PageSetupProperties(fitToPage=True)
+    ws.page_setup.orientation = 'landscape'
+    ws.page_setup.fitToWidth = 1
+    ws.page_setup.fitToHeight = 0
+
+    # ── Response ──
     response = HttpResponse(
         content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
     )
@@ -536,24 +672,117 @@ def export_historique_excel(request):
 
 
 # ─── EXPORT PDF ───────────────────────────────────────────
+def _draw_header(canvas, doc):
+    from reportlab.lib import colors
+    from reportlab.lib.units import cm
+    from reportlab.lib.pagesizes import A4, landscape
+    w, h = landscape(A4)
+    canvas.saveState()
+    # Header background
+    canvas.setFillColor(colors.HexColor('#1A3A6B'))
+    canvas.roundRect(0.8*cm, h - 1.6*cm, w - 1.6*cm, 1.1*cm, 4, fill=1, stroke=0)
+    # Logo shield
+    canvas.setFillColor(colors.HexColor('#C8A84B'))
+    cx, cy = 1.5*cm, h - 1.05*cm
+    canvas.setStrokeColor(colors.HexColor('#A8882B'))
+    canvas.setLineWidth(1.2)
+    p = canvas.beginPath()
+    p.moveTo(cx-12, cy-10)
+    p.lineTo(cx, cy-18)
+    p.lineTo(cx+12, cy-10)
+    p.lineTo(cx+12, cy+8)
+    p.lineTo(cx, cy+18)
+    p.lineTo(cx-12, cy+8)
+    p.close()
+    canvas.drawPath(p, fill=1, stroke=1)
+    canvas.setFillColor(colors.HexColor('#1A3A6B'))
+    canvas.setFont('Times-Bold', 9)
+    canvas.drawCentredString(cx, cy-5, 'ADII')
+    # Title
+    canvas.setFillColor(colors.white)
+    canvas.setFont('Helvetica-Bold', 13)
+    canvas.drawString(2.5*cm, h - 1.35*cm, 'ADII — Gestion d\'habillement')
+    canvas.setFont('Helvetica', 7)
+    canvas.setFillColor(colors.HexColor('#B0C4DE'))
+    canvas.drawString(2.5*cm, h - 1.55*cm, 'Administration des Douanes et Impôts Indirects')
+    # Divider
+    canvas.setStrokeColor(colors.HexColor('#B0C4DE'))
+    canvas.setLineWidth(0.5)
+    canvas.line(10.5*cm, h - 1.05*cm, 10.5*cm, h - 1.55*cm)
+    # Right side
+    canvas.setFillColor(colors.HexColor('#B0C4DE'))
+    canvas.setFont('Helvetica-Bold', 7)
+    canvas.drawRightString(w - 1.5*cm, h - 1.2*cm, 'RAPPORT')
+    canvas.setStrokeColor(colors.HexColor('#C8A84B'))
+    canvas.setLineWidth(2)
+    canvas.line(w - 3.5*cm, h - 1.28*cm, w - 1.5*cm, h - 1.28*cm)
+    canvas.setFillColor(colors.HexColor('#90A4C4'))
+    canvas.setFont('Helvetica', 6.5)
+    canvas.drawRightString(w - 1.5*cm, h - 1.45*cm, 'Historique par agent')
+    # Footer
+    canvas.setFillColor(colors.HexColor('#94A3B8'))
+    canvas.setFont('Helvetica', 6.5)
+    canvas.drawCentredString(w/2, 0.5*cm,
+        f'ADII — Administration des Douanes et Impôts Indirects — Page {doc.page} / {{TBD}}')
+    canvas.restoreState()
+
+
 def _render_pdf_reportlab(historiques, agents, agent_filter, date_debut, date_fin):
     from reportlab.lib.pagesizes import A4, landscape
     from reportlab.lib import colors
+    from reportlab.lib.units import cm
     from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
-    from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, Spacer
+    from reportlab.platypus import (SimpleDocTemplate, Table, TableStyle,
+                                    Paragraph, Spacer, PageBreak)
 
     buffer = io.BytesIO()
-    doc = SimpleDocTemplate(buffer, pagesize=landscape(A4), title="Historique par agent")
+    doc = SimpleDocTemplate(
+        buffer, pagesize=landscape(A4),
+        title="Historique par agent",
+        topMargin=2.2*cm, bottomMargin=1.2*cm,
+        leftMargin=1.2*cm, rightMargin=1.2*cm,
+    )
     styles = getSampleStyleSheet()
+
+    title_style = ParagraphStyle(
+        'ReportTitle', parent=styles['Title'],
+        fontSize=13, textColor=colors.HexColor('#1A3A6B'),
+        spaceAfter=2, spaceBefore=2,
+    )
+    subtitle_style = ParagraphStyle(
+        'ReportSub', parent=styles['Normal'],
+        fontSize=7.5, textColor=colors.HexColor('#64748B'),
+        spaceAfter=14,
+    )
+    agent_heading = ParagraphStyle(
+        'AgentHead', parent=styles['Heading2'],
+        fontSize=10, textColor=colors.HexColor('#1A3A6B'),
+        spaceBefore=4, spaceAfter=2,
+    )
+    section_label = ParagraphStyle(
+        'SectionLbl', parent=styles['Normal'],
+        fontSize=9, textColor=colors.HexColor('#334155'),
+        spaceBefore=6, spaceAfter=2,
+    )
+
     elements = []
 
-    title_style = ParagraphStyle('Title2', parent=styles['Title'], fontSize=16, spaceAfter=6)
-    elements.append(Paragraph("ADII — Historique par agent", title_style))
-    subtitle = f"Filtres: {'Agent spécifique' if agent_filter else 'Tous les agents'}"
+    # Report info line
+    from datetime import datetime
+    elements.append(Paragraph("Historique par agent", title_style))
+    filter_parts = [f"Généré le {datetime.now().strftime('%d/%m/%Y %H:%M')}"]
+    filter_parts.append('Agent spécifique' if agent_filter else 'Tous les agents')
     if date_debut or date_fin:
-        subtitle += f" | Du {date_debut or '…'} au {date_fin or '…'}"
-    elements.append(Paragraph(subtitle, styles['Normal']))
-    elements.append(Spacer(1, 12))
+        filter_parts.append(f"Du {date_debut or '...'} au {date_fin or '...'}")
+    elements.append(Paragraph(' · '.join(filter_parts), subtitle_style))
+    # Separator
+    sep_data = [['', '']]
+    sep_table = Table(sep_data, colWidths=[landscape(A4)[0] - 2.4*cm, 0])
+    sep_table.setStyle(TableStyle([
+        ('LINEBELOW', (0, 0), (-1, -1), 1.5, colors.HexColor('#E2E8F0')),
+    ]))
+    elements.append(sep_table)
+    elements.append(Spacer(1, 3))
 
     for h in historiques:
         agent = h['agent']
@@ -562,57 +791,65 @@ def _render_pdf_reportlab(historiques, agents, agent_filter, date_debut, date_fi
         if not measurements and not retours:
             continue
 
-        elements.append(Paragraph(
-            f"<b>{agent.get_full_name()}</b> — {agent.matricule or 'N/A'} — {agent.service or 'N/A'}",
-            styles['Heading2']
-        ))
+        agent_info = f"{agent.get_full_name()} — {agent.matricule or 'N/A'} — {agent.service or 'N/A'}"
+        badge_text = f"  [{len(measurements)} demande(s) | {len(retours)} retour(s)]"
+        elements.append(Paragraph(agent_info + badge_text, agent_heading))
 
         if measurements:
-            data = [["Date", "Équipement", "Statut"]]
+            elements.append(Paragraph("<b>📋 Demandes d'équipement</b>", section_label))
+            data = [["Date", "Type d'équipement", "Statut", "Rempli par"]]
             for m in measurements:
+                rempli = m.rempli_par.get_full_name() or m.rempli_par.username if m.rempli_par else '—'
                 data.append([
                     m.created_at.strftime('%d/%m/%Y'),
                     m.get_type_equipement_display(),
-                    m.get_status_display()
+                    m.get_status_display(),
+                    rempli,
                 ])
-            table = Table(data, colWidths=[80, 150, 120])
+            table = Table(data, colWidths=[70, 130, 90, 100])
             table.setStyle(TableStyle([
                 ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#1A3A6B')),
                 ('TEXTCOLOR', (0, 0), (-1, 0), colors.white),
                 ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
-                ('FONTSIZE', (0, 0), (-1, -1), 8),
-                ('GRID', (0, 0), (-1, -1), 0.5, colors.grey),
-                ('ROWBACKGROUNDS', (0, 1), (-1, -1), [colors.white, colors.HexColor('#F0F4F8')]),
+                ('FONTSIZE', (0, 0), (-1, -1), 7),
+                ('FONTNAME', (0, 1), (-1, -1), 'Helvetica'),
+                ('GRID', (0, 0), (-1, -1), 0.4, colors.HexColor('#CBD5E1')),
+                ('ROWBACKGROUNDS', (0, 1), (-1, -1), [colors.white, colors.HexColor('#F8FAFC')]),
+                ('TOPPADDING', (0, 0), (-1, -1), 3),
+                ('BOTTOMPADDING', (0, 0), (-1, -1), 3),
             ]))
-            elements.append(Paragraph("<b>Demandes:</b>", styles['Normal']))
             elements.append(table)
-            elements.append(Spacer(1, 8))
+            elements.append(Spacer(1, 4))
 
         if retours:
-            data = [["Date", "Équipement", "Qté", "Motif"]]
+            elements.append(Paragraph("<b>🔄 Retours d'effets</b>", section_label))
+            data = [["Date", "Type d'équipement", "Qté", "Motif", "Notes"]]
             for r in retours:
                 data.append([
                     r.created_at.strftime('%d/%m/%Y'),
                     r.get_type_equipement_display(),
                     str(r.quantite),
-                    r.get_motif_display()
+                    r.get_motif_display(),
+                    r.notes or '—',
                 ])
-            table = Table(data, colWidths=[80, 150, 60, 100])
+            table = Table(data, colWidths=[70, 130, 40, 70, 90])
             table.setStyle(TableStyle([
                 ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#991B1B')),
                 ('TEXTCOLOR', (0, 0), (-1, 0), colors.white),
                 ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
-                ('FONTSIZE', (0, 0), (-1, -1), 8),
-                ('GRID', (0, 0), (-1, -1), 0.5, colors.grey),
-                ('ROWBACKGROUNDS', (0, 1), (-1, -1), [colors.white, colors.HexColor('#FEF2F2')]),
+                ('FONTSIZE', (0, 0), (-1, -1), 7),
+                ('FONTNAME', (0, 1), (-1, -1), 'Helvetica'),
+                ('GRID', (0, 0), (-1, -1), 0.4, colors.HexColor('#CBD5E1')),
+                ('ROWBACKGROUNDS', (0, 1), (-1, -1), [colors.HexColor('#FFF5F5'), colors.HexColor('#FFF0F0')]),
+                ('TOPPADDING', (0, 0), (-1, -1), 3),
+                ('BOTTOMPADDING', (0, 0), (-1, -1), 3),
             ]))
-            elements.append(Paragraph("<b>Retours:</b>", styles['Normal']))
             elements.append(table)
-            elements.append(Spacer(1, 8))
+            elements.append(Spacer(1, 4))
 
-        elements.append(Spacer(1, 12))
+        elements.append(Spacer(1, 6))
 
-    doc.build(elements)
+    doc.build(elements, onFirstPage=_draw_header, onLaterPages=_draw_header)
     buffer.seek(0)
     return buffer
 

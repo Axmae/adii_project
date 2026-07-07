@@ -1,0 +1,33 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 100" width="400" height="100">
+  <defs>
+    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#1a3a6b"/>
+      <stop offset="100%" stop-color="#2a5298"/>
+    </linearGradient>
+    <linearGradient id="accent" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#c8a84b"/>
+      <stop offset="100%" stop-color="#e8c96b"/>
+    </linearGradient>
+  </defs>
+  <rect width="400" height="100" rx="8" fill="url(#bg)"/>
+  <!-- Emblem: stylized shield -->
+  <path d="M28 28 L48 20 L68 28 L68 52 Q68 68 48 78 Q28 68 28 52 Z"
+        fill="url(#accent)" stroke="#a8882b" stroke-width="1.5"/>
+  <text x="48" y="58" font-family="serif" font-size="22" font-weight="bold"
+        fill="#1a3a6b" text-anchor="middle">ADII</text>
+  <!-- Title -->
+  <text x="90" y="44" font-family="Helvetica,Arial,sans-serif" font-size="18"
+        font-weight="bold" fill="white" letter-spacing="1">ADII</text>
+  <text x="90" y="62" font-family="Helvetica,Arial,sans-serif" font-size="9"
+        fill="rgba(255,255,255,.8)" letter-spacing="0.5">Administration des Douanes</text>
+  <text x="90" y="75" font-family="Helvetica,Arial,sans-serif" font-size="9"
+        fill="rgba(255,255,255,.8)" letter-spacing="0.5">et Impôts Indirects</text>
+  <!-- Separator line -->
+  <line x1="290" y1="25" x2="290" y2="75" stroke="rgba(255,255,255,.2)" stroke-width="1"/>
+  <!-- Right side info -->
+  <text x="305" y="44" font-family="Helvetica,Arial,sans-serif" font-size="8"
+        fill="rgba(255,255,255,.7)" letter-spacing="0.5">GESTION</text>
+  <text x="305" y="56" font-family="Helvetica,Arial,sans-serif" font-size="8"
+        fill="rgba(255,255,255,.7)" letter-spacing="0.5">D'HABILLEMENT</text>
+  <rect x="305" y="62" width="75" height="1.5" rx="0.75" fill="url(#accent)"/>
+</svg>
