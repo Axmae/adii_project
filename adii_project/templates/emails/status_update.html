@@ -1,0 +1,46 @@
+{% extends "emails/base_email.html" %}
+{% block email_content %}
+<h2 style="margin:0 0 16px;font-size:20px;color:#1E293B">Mise à jour de votre dossier</h2>
+<p style="margin:0 0 8px;color:#475569;font-size:14px;line-height:1.6">
+  Bonjour <strong>{{ m.user.prenom }} {{ m.user.nom }}</strong>,
+</p>
+<p style="margin:0 0 8px;color:#475569;font-size:14px;line-height:1.6">
+  Le statut de votre demande pour <strong>{{ m.get_type_equipement_display }}</strong>
+  a été mis à jour.
+</p>
+<div style="background:#F8FAFC;border:1px solid #E2E8F0;border-radius:8px;padding:16px;margin:16px 0">
+  <table style="width:100%;font-size:14px">
+    <tr>
+      <td style="color:#64748B;padding:4px 8px;width:100px">Équipement</td>
+      <td style="color:#1E293B;font-weight:600;padding:4px 8px">{{ m.get_type_equipement_display }}</td>
+    </tr>
+    <tr>
+      <td style="color:#64748B;padding:4px 8px">Nouveau statut</td>
+      <td style="padding:4px 8px">
+        <span style="display:inline-block;padding:2px 10px;border-radius:12px;font-weight:600;font-size:13px;
+          {% if m.status == 'livre' %}background:#D1FAE5;color:#065F46
+          {% elif m.status == 'pret' %}background:#CCFBF1;color:#115E59
+          {% elif m.status == 'en_production' %}background:#EDE9FE;color:#5B21B6
+          {% elif m.status == 'valide' %}background:#DBEAFE;color:#1E40AF
+          {% elif m.status == 'refuse' %}background:#FEE2E2;color:#991B1B
+          {% else %}background:#FEF3C7;color:#92400E{% endif %}">
+          {{ m.get_status_display }}
+        </span>
+      </td>
+    </tr>
+    {% if m.notes_admin %}
+    <tr>
+      <td style="color:#64748B;padding:4px 8px">Note</td>
+      <td style="color:#475569;padding:4px 8px;font-style:italic">{{ m.notes_admin }}</td>
+    </tr>
+    {% endif %}
+    <tr>
+      <td style="color:#64748B;padding:4px 8px">Date</td>
+      <td style="color:#475569;padding:4px 8px">{{ m.updated_at|date:"d/m/Y H:i" }}</td>
+    </tr>
+  </table>
+</div>
+<div style="text-align:center;margin:24px 0">
+  <a href="{{ dashboard_url|default:'/' }}" class="btn">Voir mon dossier</a>
+</div>
+{% endblock %}

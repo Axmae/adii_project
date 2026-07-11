@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <style>
+    body { margin:0; padding:0; background:#F1F5F9; font-family:'Segoe UI',Arial,sans-serif; }
+    .wrapper { max-width:600px; margin:0 auto; padding:24px 16px; }
+    .header { background:#1A3A6B; border-radius:12px 12px 0 0; padding:24px; text-align:center; }
+    .header h1 { color:#C8A84B; margin:0; font-size:22px; font-weight:700; letter-spacing:1px; }
+    .header p { color:#94A3B8; margin:4px 0 0; font-size:12px; }
+    .body { background:#FFFFFF; padding:32px; border-radius:0 0 12px 12px; }
+    .footer { text-align:center; padding:16px; color:#94A3B8; font-size:11px; }
+    .footer a { color:#1A3A6B; text-decoration:none; }
+    .btn { display:inline-block; padding:12px 28px; background:#1A3A6B; color:#FFFFFF !important; text-decoration:none; border-radius:8px; font-weight:600; font-size:14px; }
+    .btn-accent { background:#C8A84B; color:#1A3A6B !important; }
+  </style>
+</head>
+<body>
+  <div class="wrapper">
+    <div class="header">
+      <h1>ADII</h1>
+      <p>Administration des Douanes et Impôts Indirects</p>
+    </div>
+    <div class="body">
+      {% block email_content %}{% endblock %}
+    </div>
+    <div class="footer">
+      <p>ADII — Gestion d'Habillement<br>
+      Ce message est automatisé, merci de ne pas y répondre.</p>
+    </div>
+  </div>
+</body>
+</html>

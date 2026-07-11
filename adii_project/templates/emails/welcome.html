@@ -1,0 +1,25 @@
+{% extends "emails/base_email.html" %}
+{% block email_content %}
+<h2 style="margin:0 0 16px;font-size:20px;color:#1E293B">Bienvenue sur ADII {{ user.prenom }} !</h2>
+<p style="margin:0 0 12px;color:#475569;font-size:14px;line-height:1.6">
+  Votre compte a été créé avec succès sur la plateforme de <strong>Gestion d'Habillement</strong>
+  de l'Administration des Douanes et Impôts Indirects.
+</p>
+<p style="margin:0 0 12px;color:#475569;font-size:14px;line-height:1.6">
+  Vous pouvez dès à présent vous connecter et soumettre vos fiches de mesure
+  pour vos équipements professionnels.
+</p>
+<div style="text-align:center;margin:24px 0">
+  <a href="{{ login_url|default:'/' }}" class="btn">Accéder à mon espace</a>
+</div>
+<table style="width:100%;border-top:1px solid #E2E8F0;margin-top:24px;padding-top:16px">
+  <tr>
+    <td style="color:#64748B;font-size:13px">
+      <strong>Vos informations :</strong><br>
+      Nom : {{ user.prenom }} {{ user.nom }}<br>
+      Matricule : {{ user.matricule|default:"—" }}<br>
+      Service : {{ user.service|default:"—" }}
+    </td>
+  </tr>
+</table>
+{% endblock %}
