@@ -29,3 +29,6 @@ Thumbs.db
 # --- Project archives ---
 *.tar.gz
 *.zip
+
+# --- SECRET ---
+.env
