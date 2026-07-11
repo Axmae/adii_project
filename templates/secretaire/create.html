@@ -11,7 +11,7 @@
 
 <!-- Sélection agent -->
 <div class="card" style="margin-bottom:20px">
-<div class="card-title" style="margin-bottom:16px">👤 Sélectionner l'agent</div>
+<div class="card-title" style="margin-bottom:16px"> Sélectionner l'agent</div>
 <div style="display:flex;gap:12px;flex-wrap:wrap">
     {% for agent in agents %}
     <a href="?agent={{ agent.pk }}"
@@ -35,19 +35,19 @@
     <p style="font-size:.8rem;font-weight:600;color:var(--text-muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:12px">Guide des mesures</p>
     <img src="{% static 'img/schema_mesures_corps.svg' %}" alt="Schéma" style="width:100%;max-width:280px">
     <div style="margin-top:12px;background:var(--bg);border-radius:8px;padding:10px;text-align:left;font-size:.8rem;color:var(--text-muted);line-height:1.8">
-    <div>🟢 <strong>Poitrine</strong> — sous les aisselles</div>
-    <div>🟠 <strong>Taille</strong> — partie la plus fine</div>
-    <div>🔴 <strong>Hanches</strong> — partie la plus large</div>
-    <div>🔵 <strong>Épaules</strong> — d'une épaule à l'autre</div>
-    <div>🟣 <strong>Manche</strong> — épaule jusqu'au poignet</div>
-    <div>🩷 <strong>Entrejambe</strong> — entrejambe jusqu'au sol</div>
+    <div> <strong>Poitrine</strong> — sous les aisselles</div>
+    <div> <strong>Taille</strong> — partie la plus fine</div>
+    <div> <strong>Hanches</strong> — partie la plus large</div>
+    <div> <strong>Épaules</strong> — d'une épaule à l'autre</div>
+    <div> <strong>Manche</strong> — épaule jusqu'au poignet</div>
+    <div> <strong>Entrejambe</strong> — entrejambe jusqu'au sol</div>
     </div>
 </div>
 
 <!-- Formulaire -->
 <div class="card">
     <div style="background:#eff6ff;border:1px solid #bfdbfe;border-radius:8px;padding:12px 16px;margin-bottom:20px;font-size:.875rem;color:#1e40af">
-    ✍️ Vous remplissez la fiche pour <strong>{{ selected_agent.get_full_name }}</strong> ({{ selected_agent.matricule }})
+     Vous remplissez la fiche pour <strong>{{ selected_agent.get_full_name }}</strong> ({{ selected_agent.matricule }})
     </div>
     <form method="post">
     {% csrf_token %}
@@ -98,7 +98,7 @@
         </div>
     </div>
     <div style="display:flex;gap:12px">
-        <button type="submit" class="btn btn-primary btn-lg">📤 Soumettre la fiche</button>
+        <button type="submit" class="btn btn-primary btn-lg"> Soumettre la fiche</button>
         <a href="{% url 'secretaire_dashboard' %}" class="btn btn-outline btn-lg">Annuler</a>
     </div>
     </form>
@@ -107,7 +107,7 @@
 {% else %}
 <div class="card">
 <div class="empty-state">
-    <div class="empty-icon">👆</div>
+    <div class="empty-icon"></div>
     <h3>Sélectionnez un agent ci-dessus</h3>
     <p>Cliquez sur le nom de l'agent pour qui vous souhaitez remplir la fiche.</p>
 </div>

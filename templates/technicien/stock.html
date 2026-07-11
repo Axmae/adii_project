@@ -4,12 +4,12 @@
 <div class="container">
   <div class="page-header" style="display:flex;justify-content:space-between;align-items:flex-end;flex-wrap:wrap;gap:12px">
     <div>
-      <h1 class="page-title">📦 Gestion du stock</h1>
+      <h1 class="page-title"> Gestion du stock</h1>
       <p class="page-subtitle">Contrôlez les entrées et sorties des effets d'habillement</p>
     </div>
     <div style="display:flex;gap:10px">
-      <a href="{% url 'stock_movements_all' %}" class="btn btn-outline">📋 Historique</a>
-      <a href="{% url 'stock_add' %}" class="btn btn-primary">➕ Ajouter un article</a>
+      <a href="{% url 'stock_movements_all' %}" class="btn btn-outline"> Historique</a>
+      <a href="{% url 'stock_add' %}" class="btn btn-primary"> Ajouter un article</a>
     </div>
   </div>
 
@@ -38,7 +38,7 @@
     <!-- Table stock -->
     <div class="card">
       <div class="card-header">
-        <span class="card-title">📦 Inventaire</span>
+        <span class="card-title"> Inventaire</span>
       </div>
       <div class="table-wrap">
         <table>
@@ -74,16 +74,16 @@
               <td>
                 <div style="display:flex;gap:6px">
                   <a href="{% url 'stock_movement' item.pk %}" class="btn btn-primary btn-sm">
-                    ↕ Mouvement
+                     Mouvement
                   </a>
-                  <a href="{% url 'stock_edit' item.pk %}" class="btn btn-outline btn-sm">✏️</a>
+                  <a href="{% url 'stock_edit' item.pk %}" class="btn btn-outline btn-sm"></a>
                 </div>
               </td>
             </tr>
             {% endwith %}
             {% empty %}
             <tr><td colspan="7">
-              <div class="empty-state"><div class="empty-icon">📦</div><p>Aucun article.</p></div>
+              <div class="empty-state"><div class="empty-icon"></div><p>Aucun article.</p></div>
             </td></tr>
             {% endfor %}
           </tbody>
@@ -94,7 +94,7 @@
     <!-- Derniers mouvements -->
     <div class="card" style="position:sticky;top:80px">
       <div class="card-header">
-        <span class="card-title">🕐 Derniers mouvements</span>
+        <span class="card-title"> Derniers mouvements</span>
         <a href="{% url 'stock_movements_all' %}" style="font-size:.75rem;color:var(--primary);text-decoration:none">Tout voir</a>
       </div>
       <div style="display:flex;flex-direction:column;gap:10px">

@@ -21,33 +21,33 @@
   <div class="navbar-nav">
 
     {% if user.role == 'agent' %}
-      <a class="nav-link" href="{% url 'agent_dashboard' %}">🗂 Mes dossiers</a>
-      <a class="nav-link" href="{% url 'create_measurement' %}">➕ Nouvelle fiche</a>
-      <a class="nav-link" href="{% url 'enregistrer_retour' %}">🔄 Retour effets</a>
+      <a class="nav-link" href="{% url 'agent_dashboard' %}">Mes dossiers</a>
+      <a class="nav-link" href="{% url 'create_measurement' %}">Nouvelle fiche</a>
+      <a class="nav-link" href="{% url 'enregistrer_retour' %}">Retour effets</a>
 
     {% elif user.role == 'secretaire' %}
-      <a class="nav-link" href="{% url 'secretaire_dashboard' %}">📋 Fiches agents</a>
-      <a class="nav-link" href="{% url 'secretaire_create' %}">➕ Nouvelle fiche</a>
-      <a class="nav-link" href="{% url 'avancement_groupe' %}">📊 Avancement groupé</a>
+      <a class="nav-link" href="{% url 'secretaire_dashboard' %}">Fiches agents</a>
+      <a class="nav-link" href="{% url 'secretaire_create' %}">Nouvelle fiche</a>
+      <a class="nav-link" href="{% url 'avancement_groupe' %}">Avancement groupe</a>
 
     {% elif user.role == 'admin' %}
-      <a class="nav-link" href="{% url 'admin_dashboard' %}">📊 Tableau de bord</a>
-      <a class="nav-link" href="{% url 'avancement_groupe' %}">📋 Avancement groupé</a>
-      <a class="nav-link" href="{% url 'livraison_groupee' %}">🚚 Livraisons</a>
-      <a class="nav-link" href="{% url 'historique_agents' %}">📜 Historique</a>
-      <a class="nav-link" href="{% url 'manage_users' %}">👥 Utilisateurs</a>
-      <a class="nav-link" href="{% url 'stock_list' %}">📦 Stock</a>
+      <a class="nav-link" href="{% url 'admin_dashboard' %}">Tableau de bord</a>
+      <a class="nav-link" href="{% url 'avancement_groupe' %}">Avancement groupe</a>
+      <a class="nav-link" href="{% url 'livraison_groupee' %}">Livraisons</a>
+      <a class="nav-link" href="{% url 'historique_agents' %}">Historique</a>
+      <a class="nav-link" href="{% url 'manage_users' %}">Utilisateurs</a>
+      <a class="nav-link" href="{% url 'stock_list' %}">Stock</a>
 
     {% elif user.role == 'technicien' %}
-      <a class="nav-link" href="{% url 'tech_dashboard' %}">🔧 Fiches</a>
-      <a class="nav-link" href="{% url 'stock_list' %}">📦 Stock</a>
+      <a class="nav-link" href="{% url 'tech_dashboard' %}">Fiches</a>
+      <a class="nav-link" href="{% url 'stock_list' %}">Stock</a>
     {% endif %}
 
     <div class="nav-divider"></div>
 
     <div class="dropdown notif-btn">
       <button class="nav-link" data-toggle="notif" style="background:none;border:none;cursor:pointer">
-        🔔
+        Notif.
         {% if unread_count > 0 %}<span class="notif-badge">{{ unread_count }}</span>{% endif %}
       </button>
       <div class="dropdown-menu" id="notif-menu">
@@ -74,8 +74,8 @@
     </div>
 
     <div class="nav-divider"></div>
-    <a class="nav-link" href="{% url 'profile' %}">👤 {{ user.get_full_name|default:user.username }}</a>
-    <a class="nav-link" href="{% url 'logout' %}">🚪 Déconnexion</a>
+    <a class="nav-link" href="{% url 'profile' %}">{{ user.get_full_name|default:user.username }}</a>
+    <a class="nav-link" href="{% url 'logout' %}">Deconnexion</a>
   </div>
 </nav>
 {% endif %}

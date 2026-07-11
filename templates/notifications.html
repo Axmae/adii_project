@@ -3,7 +3,7 @@
 {% block content %}
 <div class="container" style="max-width:700px">
   <div class="page-header" style="display:flex;justify-content:space-between;align-items:flex-end">
-    <h1 class="page-title">🔔 Notifications</h1>
+    <h1 class="page-title"> Notifications</h1>
     {% if notifications %}<a href="{% url 'mark_all_read' %}" class="btn btn-outline btn-sm">Tout marquer comme lu</a>{% endif %}
   </div>
   <div class="main-content">
@@ -21,7 +21,7 @@
         {% endif %}
       </div>
       {% empty %}
-      <div class="empty-state"><div class="empty-icon">🔔</div><p>Aucune notification.</p></div>
+      <div class="empty-state"><div class="empty-icon"></div><p>Aucune notification.</p></div>
       {% endfor %}
     </div>
   </div>

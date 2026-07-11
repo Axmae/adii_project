@@ -5,7 +5,7 @@
   <div class="page-header" style="display:flex;justify-content:space-between;align-items:flex-end;flex-wrap:wrap;gap:12px">
     <div>
       <a href="{% url 'admin_dashboard' %}" style="color:var(--text-muted);text-decoration:none;font-size:.875rem">← Tableau de bord</a>
-      <h1 class="page-title" style="margin-top:8px">🚚 Livraison groupée</h1>
+      <h1 class="page-title" style="margin-top:8px"> Livraison groupée</h1>
       <p class="page-subtitle">Sélectionnez les agents dont la tenue est prête à être remise.</p>
     </div>
   </div>
@@ -14,7 +14,7 @@
     {% if not fiches_pretes %}
     <div class="card">
       <div class="empty-state">
-        <div class="empty-icon">✅</div>
+        <div class="empty-icon"></div>
         <h3 style="margin-bottom:8px">Aucune tenue en attente de livraison</h3>
         <p>Toutes les tenues prêtes ont déjà été livrées.</p>
       </div>
@@ -31,7 +31,7 @@
           <span id="count-label" style="color:var(--text-muted);font-size:.875rem">(0 sélectionné)</span>
         </div>
         <button type="submit" class="btn btn-success btn-lg" id="confirm-btn" disabled>
-          🚚 Confirmer la livraison
+           Confirmer la livraison
         </button>
       </div>
 
@@ -64,7 +64,7 @@
           </div>
 
           <!-- Badge -->
-          <span class="badge badge-teal">📦 Prêt</span>
+          <span class="badge badge-teal"> Prêt</span>
         </label>
         {% endfor %}
       </div>
@@ -87,8 +87,8 @@ function updateUI() {
   countLabel.textContent = `(${checked} sélectionné${checked > 1 ? 's' : ''})`;
   confirmBtn.disabled = checked === 0;
   confirmBtn.textContent = checked > 0
-    ? `🚚 Confirmer la livraison (${checked})`
-    : '🚚 Confirmer la livraison';
+    ? ` Confirmer la livraison (${checked})`
+    : ' Confirmer la livraison';
   selectAll.checked = checked === checkboxes.length && checkboxes.length > 0;
   selectAll.indeterminate = checked > 0 && checked < checkboxes.length;
 }

@@ -4,7 +4,7 @@
 <div class="container">
   <div class="page-header">
     <a href="{% url 'admin_dashboard' %}" style="color:var(--text-muted);text-decoration:none;font-size:.875rem">← Tableau de bord</a>
-    <h1 class="page-title" style="margin-top:8px">📋 Mise à jour groupée de l'avancement</h1>
+    <h1 class="page-title" style="margin-top:8px"> Mise à jour groupée de l'avancement</h1>
     <p class="page-subtitle">Sélectionnez plusieurs agents et mettez à jour leur statut en une seule opération.</p>
   </div>
 
@@ -34,7 +34,7 @@
             <option value="pret"          {% if status_filter == 'pret' %}selected{% endif %}>Prêt</option>
           </select>
         </div>
-        <button type="submit" class="btn btn-primary">🔍 Filtrer</button>
+        <button type="submit" class="btn btn-primary"> Filtrer</button>
         <a href="{% url 'avancement_groupe' %}" class="btn btn-outline">Réinitialiser</a>
       </form>
     </div>
@@ -42,7 +42,7 @@
     {% if not fiches %}
     <div class="card">
       <div class="empty-state">
-        <div class="empty-icon">✅</div>
+        <div class="empty-icon"></div>
         <h3>Aucune fiche active</h3>
         <p>Tous les dossiers sont traités ou aucun ne correspond aux filtres.</p>
       </div>
@@ -63,15 +63,15 @@
           <label style="font-size:.875rem;font-weight:600">Nouveau statut :</label>
           <select name="new_status" id="new-status" class="form-input" style="width:auto;padding:8px 12px">
             <option value="">-- Choisir --</option>
-            <option value="en_attente">⏳ En attente</option>
-            <option value="valide">✅ Validé</option>
-            <option value="en_production">🔧 En production</option>
-            <option value="pret">📦 Prêt</option>
-            <option value="livre">🚚 Livré</option>
-            <option value="refuse">❌ Refusé</option>
+            <option value="en_attente"> En attente</option>
+            <option value="valide"> Validé</option>
+            <option value="en_production"> En production</option>
+            <option value="pret"> Prêt</option>
+            <option value="livre"> Livré</option>
+            <option value="refuse"> Refusé</option>
           </select>
           <button type="submit" class="btn btn-primary" id="confirm-btn" disabled>
-            💾 Mettre à jour
+             Mettre à jour
           </button>
         </div>
       </div>
@@ -97,7 +97,7 @@
             </div>
             {% if fiche.rempli_par and fiche.rempli_par != fiche.user %}
             <div style="font-size:.75rem;color:var(--text-muted);margin-top:2px">
-              ✍️ Rempli par {{ fiche.rempli_par.get_full_name }}
+               Rempli par {{ fiche.rempli_par.get_full_name }}
             </div>
             {% endif %}
           </div>
@@ -119,21 +119,21 @@
             <div style="display:flex;align-items:center;gap:3px">
               {% with s=fiche.status %}
               <div style="width:22px;height:22px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:.65rem;font-weight:700;
-                {% if s != 'refuse' %}background:#d1fae5;color:#065f46{% else %}background:#fee2e2;color:#991b1b{% endif %}">✓</div>
+                {% if s != 'refuse' %}background:#d1fae5;color:#065f46{% else %}background:#fee2e2;color:#991b1b{% endif %}"></div>
               <div style="flex:1;height:2px;{% if s in 'valide,en_production,pret,livre' %}background:#10b981{% else %}background:var(--border){% endif %}"></div>
               <div style="width:22px;height:22px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:.65rem;font-weight:700;
                 {% if s in 'valide,en_production,pret,livre' %}background:#d1fae5;color:#065f46{% elif s == 'refuse' %}background:#fee2e2;color:#991b1b{% else %}background:var(--border);color:var(--text-muted){% endif %}">
-                {% if s in 'valide,en_production,pret,livre' %}✓{% else %}2{% endif %}
+                {% if s in 'valide,en_production,pret,livre' %}{% else %}2{% endif %}
               </div>
               <div style="flex:1;height:2px;{% if s in 'en_production,pret,livre' %}background:#10b981{% else %}background:var(--border){% endif %}"></div>
               <div style="width:22px;height:22px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:.65rem;font-weight:700;
                 {% if s in 'pret,livre' %}background:#d1fae5;color:#065f46{% elif s == 'en_production' %}background:#ede9fe;color:#5b21b6{% else %}background:var(--border);color:var(--text-muted){% endif %}">
-                {% if s in 'pret,livre' %}✓{% elif s == 'en_production' %}🔧{% else %}3{% endif %}
+                {% if s in 'pret,livre' %}{% elif s == 'en_production' %}{% else %}3{% endif %}
               </div>
               <div style="flex:1;height:2px;{% if s in 'pret,livre' %}background:#10b981{% else %}background:var(--border){% endif %}"></div>
               <div style="width:22px;height:22px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:.65rem;font-weight:700;
                 {% if s == 'livre' %}background:#d1fae5;color:#065f46{% elif s == 'pret' %}background:#ccfbf1;color:#0f766e{% else %}background:var(--border);color:var(--text-muted){% endif %}">
-                {% if s == 'livre' %}✓{% elif s == 'pret' %}📦{% else %}4{% endif %}
+                {% if s == 'livre' %}{% elif s == 'pret' %}{% else %}4{% endif %}
               </div>
               {% endwith %}
             </div>
@@ -168,8 +168,8 @@ function updateUI() {
   countLabel.textContent = `(${checked} sélectionné${checked > 1 ? 's' : ''})`;
   confirmBtn.disabled = checked === 0 || !newStatus.value;
   confirmBtn.textContent = checked > 0 && newStatus.value
-    ? `💾 Mettre à jour (${checked})`
-    : '💾 Mettre à jour';
+    ? ` Mettre à jour (${checked})`
+    : ' Mettre à jour';
   selectAll.checked = checked === checkboxes.length && checkboxes.length > 0;
   selectAll.indeterminate = checked > 0 && checked < checkboxes.length;
 }

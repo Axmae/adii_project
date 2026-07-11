@@ -897,7 +897,8 @@ def export_historique_pdf(request):
             'date_debut': date_debut,
             'date_fin': date_fin,
         })
-        pdf = weasyprint.HTML(string=html).write_pdf()
+        from pathlib import Path
+        pdf = weasyprint.HTML(string=html, base_url=Path(__file__).resolve().parent.parent).write_pdf()
         response = HttpResponse(pdf, content_type='application/pdf')
         response['Content-Disposition'] = 'attachment; filename="historique_agents.pdf"'
         return response

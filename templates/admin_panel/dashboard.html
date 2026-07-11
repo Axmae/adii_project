@@ -3,7 +3,7 @@
 {% block content %}
 <div class="container">
   <div class="page-header">
-    <h1 class="page-title">📊 Tableau de bord administrateur</h1>
+    <h1 class="page-title"> Tableau de bord administrateur</h1>
     <p class="page-subtitle">Gestion des fiches et suivi des dotations</p>
   </div>
   <div class="main-content">
@@ -21,10 +21,10 @@
     <!-- Boutons actions groupées -->
     <div style="display:flex;justify-content:flex-end;gap:10px;margin-bottom:20px;flex-wrap:wrap">
       <a href="{% url 'avancement_groupe' %}" class="btn btn-primary">
-        📋 Avancement groupé
+         Avancement groupé
       </a>
       <a href="{% url 'livraison_groupee' %}" class="btn btn-success">
-        🚚 Livraison groupée
+         Livraison groupée
         {% if stats.pret > 0 %}
         <span style="background:white;color:var(--success);border-radius:10px;padding:1px 8px;font-size:.75rem;margin-left:4px">
           {{ stats.pret }}
@@ -37,7 +37,7 @@
     {% if stock_alerts %}
     <div class="card" style="margin-bottom:20px;border-left:4px solid var(--warning)">
       <div class="card-header">
-        <span class="card-title">⚠️ Alertes stock bas</span>
+        <span class="card-title"> Alertes stock bas</span>
         <a href="{% url 'stock_list' %}" class="btn btn-outline btn-sm">Voir le stock</a>
       </div>
       <div style="display:flex;flex-direction:column;gap:8px">
@@ -62,7 +62,7 @@
     <!-- Derniers mouvements stock -->
     <div class="card" style="margin-bottom:20px">
       <div class="card-header">
-        <span class="card-title">📦 Derniers mouvements de stock</span>
+        <span class="card-title"> Derniers mouvements de stock</span>
         <a href="{% url 'stock_movements_all' %}" class="btn btn-outline btn-sm">Tout voir</a>
       </div>
       <div class="table-wrap">
@@ -102,8 +102,8 @@
     <!-- Toutes les fiches -->
     <div class="card">
       <div class="card-header">
-        <span class="card-title">📋 Toutes les fiches</span>
-        <a href="{% url 'manage_users' %}" class="btn btn-outline btn-sm">👥 Utilisateurs</a>
+        <span class="card-title"> Toutes les fiches</span>
+        <a href="{% url 'manage_users' %}" class="btn btn-outline btn-sm"> Utilisateurs</a>
       </div>
       <div class="table-wrap">
         <table>
@@ -126,14 +126,14 @@
               <td style="color:var(--text-muted)">{{ m.created_at|date:"d/m/Y" }}</td>
               <td>
                 <div style="display:flex;gap:6px;flex-wrap:wrap">
-                  <a href="{% url 'measurement_detail' m.pk %}" class="btn btn-outline btn-sm">👁 Voir</a>
+                  <a href="{% url 'measurement_detail' m.pk %}" class="btn btn-outline btn-sm"> Voir</a>
                   {% if m.status == 'en_attente' %}
                   <form method="post" action="{% url 'validate_measurement' m.pk %}" style="display:inline">
                     {% csrf_token %}
                     <input type="hidden" name="action" value="valide">
-                    <button type="submit" class="btn btn-success btn-sm">✅ Valider</button>
+                    <button type="submit" class="btn btn-success btn-sm"> Valider</button>
                   </form>
-                  <button onclick="openRefuse({{ m.pk }})" class="btn btn-danger btn-sm">❌ Refuser</button>
+                  <button onclick="openRefuse({{ m.pk }})" class="btn btn-danger btn-sm"> Refuser</button>
                   {% endif %}
                 </div>
               </td>

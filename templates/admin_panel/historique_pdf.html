@@ -7,7 +7,7 @@
       size: A4 landscape;
       margin: 1.2cm 1.5cm;
       @bottom-center {
-        content: "ADII — Administration des Douanes et Impôts Indirects — Page " counter(page) " / " counter(pages);
+        content: "ADII — page " counter(page) " / " counter(pages);
         font-size: 7pt;
         color: #94a3b8;
         font-family: Helvetica, Arial, sans-serif;
@@ -15,43 +15,28 @@
     }
     body { font-family: Helvetica, Arial, sans-serif; font-size: 9pt; color: #1e293b; margin: 0; padding: 0; }
 
-    /* Header */
     .header {
-      display: flex; align-items: center; gap: 16px;
-      background: linear-gradient(135deg, #1a3a6b 0%, #2a5298 100%);
-      border-radius: 6px; padding: 14px 20px; margin-bottom: 18px;
+      background: #1a3a6b;
+      border-radius: 6px; padding: 10px 16px; margin-bottom: 16px;
+      display: flex; align-items: center; gap: 14px;
     }
-    .header-logo {
-      width: 44px; height: 44px; flex-shrink: 0;
-      background: #c8a84b; border-radius: 8px;
-      display: flex; align-items: center; justify-content: center;
-      font-family: serif; font-size: 20px; font-weight: bold; color: #1a3a6b;
-    }
-    .header-text { flex: 1; }
-    .header-title { font-size: 16pt; font-weight: 700; color: white; letter-spacing: 0.5px; }
-    .header-sub { font-size: 7.5pt; color: rgba(255,255,255,.75); letter-spacing: 0.3px; }
-    .header-divider { width: 1px; height: 40px; background: rgba(255,255,255,.2); }
-    .header-meta { text-align: right; }
-    .header-meta-title { font-size: 8pt; color: rgba(255,255,255,.7); letter-spacing: 1px; font-weight: 600; }
-    .header-meta-line { width: 60px; height: 2px; background: #c8a84b; margin: 4px 0 4px auto; border: none; }
+    .header img { height: 40px; }
 
-    /* Report info */
     .report-info {
-      display: flex; justify-content: space-between; align-items: center;
-      margin-bottom: 16px; padding-bottom: 10px;
-      border-bottom: 2px solid #e2e8f0;
+      display: flex; justify-content: space-between;
+      margin-bottom: 14px; padding-bottom: 8px;
+      border-bottom: 1px solid #e2e8f0;
     }
     .report-title { font-size: 13pt; font-weight: 700; color: #1a3a6b; }
     .report-filters { font-size: 7.5pt; color: #64748b; }
 
-    /* Agent section */
     .agent-section {
-      margin-bottom: 18px; page-break-inside: avoid;
-      border: 1px solid #e2e8f0; border-radius: 6px; padding: 12px 14px;
+      margin-bottom: 16px; page-break-inside: avoid;
+      border: 1px solid #e2e8f0; border-radius: 6px; padding: 10px 12px;
     }
     .agent-header {
       display: flex; justify-content: space-between; align-items: center;
-      margin-bottom: 10px; padding-bottom: 8px;
+      margin-bottom: 8px; padding-bottom: 6px;
       border-bottom: 1px solid #f1f5f9;
     }
     .agent-name { font-size: 11pt; font-weight: 700; color: #1a3a6b; }
@@ -60,10 +45,7 @@
     .agent-badge-blue { background: #dbeafe; color: #1e40af; }
     .agent-badge-red { background: #fee2e2; color: #991b1b; }
 
-    h3 {
-      font-size: 9pt; margin: 8px 0 5px; color: #334155;
-      display: flex; align-items: center; gap: 6px;
-    }
+    h3 { font-size: 9pt; margin: 8px 0 5px; color: #334155; }
     table { width: 100%; border-collapse: collapse; margin-bottom: 6px; font-size: 7.5pt; }
     th {
       padding: 5px 8px; text-align: left; font-weight: 600; font-size: 7pt;
@@ -78,33 +60,22 @@
 
     .empty { color: #94a3b8; font-style: italic; padding: 6px 0; font-size: 8pt; }
     .footer-text { margin-top: 12px; font-size: 6.5pt; color: #94a3b8; text-align: center; }
-
     .page-break { page-break-before: always; }
   </style>
 </head>
 <body>
 
   <div class="header">
-    <div class="header-logo">ADII</div>
-    <div class="header-text">
-      <div class="header-title">ADII — Gestion d'habillement</div>
-      <div class="header-sub">Administration des Douanes et Impôts Indirects</div>
-    </div>
-    <div class="header-divider"></div>
-    <div class="header-meta">
-      <div class="header-meta-title">RAPPORT</div>
-      <hr class="header-meta-line">
-      <div style="font-size:7pt;color:rgba(255,255,255,.6)">Historique par agent</div>
-    </div>
+    <img src="static/img/ADII_HEADER.svg" alt="ADII">
   </div>
 
   <div class="report-info">
     <div>
-      <div class="report-title">📜 Historique par agent</div>
+      <div class="report-title">Historique par agent</div>
       <div class="report-filters">
-        Généré le {% now "d/m/Y" %} à {% now "H:i" %} ·
-        {% if agent_filter %}Agent spécifique{% else %}Tous les agents{% endif %}
-        {% if date_debut or date_fin %} · Du {{ date_debut|default:'...' }} au {{ date_fin|default:'...' }}{% endif %}
+        Genere le {% now "d/m/Y" %} a {% now "H:i" %} •
+        {% if agent_filter %}Agent specifique{% else %}Tous les agents{% endif %}
+        {% if date_debut or date_fin %} • Du {{ date_debut|default:'...' }} au {{ date_fin|default:'...' }}{% endif %}
       </div>
     </div>
     <div style="text-align:right;font-size:7pt;color:#94a3b8">
@@ -118,8 +89,8 @@
       <div>
         <div class="agent-name">{{ h.agent.get_full_name }}</div>
         <div class="agent-info">
-          Matricule : {{ h.agent.matricule|default:'N/A' }} ·
-          Service : {{ h.agent.service|default:'N/A' }} ·
+          Matricule : {{ h.agent.matricule|default:'N/A' }} •
+          Service : {{ h.agent.service|default:'N/A' }} •
           Email : {{ h.agent.email|default:'N/A' }}
         </div>
       </div>
@@ -130,11 +101,11 @@
     </div>
 
     {% if h.measurements %}
-    <h3>📋 Demandes d'équipement</h3>
+    <h3>Demandes d'equipement</h3>
     <table>
       <thead><tr>
         <th class="demande">Date</th>
-        <th class="demande">Type d'équipement</th>
+        <th class="demande">Type d'equipement</th>
         <th class="demande">Statut</th>
         <th class="demande">Rempli par</th>
       </tr></thead>
@@ -162,12 +133,12 @@
     {% endif %}
 
     {% if h.retours %}
-    <h3>🔄 Retours d'effets</h3>
+    <h3>Retours d'effets</h3>
     <table>
       <thead><tr>
         <th class="retour">Date</th>
-        <th class="retour">Type d'équipement</th>
-        <th class="retour">Quantité</th>
+        <th class="retour">Type d'equipement</th>
+        <th class="retour">Quantite</th>
         <th class="retour">Motif</th>
         <th class="retour">Notes</th>
       </tr></thead>
@@ -194,13 +165,13 @@
     {% endif %}
 
     {% if not h.measurements and not h.retours %}
-    <div class="empty">Aucune donnée pour cet agent.</div>
+    <div class="empty">Aucune donnee pour cet agent.</div>
     {% endif %}
   </div>
   {% endfor %}
 
   <div class="footer-text">
-    ADII — Administration des Douanes et Impôts Indirects — Document généré automatiquement le {% now "d/m/Y" %}
+    ADII — Administration des Douanes et Impots Indirects — Document genere automatiquement le {% now "d/m/Y" %}
   </div>
 </body>
 </html>

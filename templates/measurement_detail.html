@@ -9,14 +9,14 @@
   <div class="main-content">
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:20px">
       <div class="card">
-        <div class="card-title" style="margin-bottom:12px">👤 Agent</div>
+        <div class="card-title" style="margin-bottom:12px"> Agent</div>
         <div><strong>{{ m.user.get_full_name }}</strong></div>
         <div style="color:var(--text-muted);font-size:.875rem">{{ m.user.email }}</div>
         <div style="color:var(--text-muted);font-size:.875rem">Matricule : {{ m.user.matricule }}</div>
         <div style="color:var(--text-muted);font-size:.875rem">Service : {{ m.user.service }}</div>
       </div>
       <div class="card">
-        <div class="card-title" style="margin-bottom:12px">📋 Dossier</div>
+        <div class="card-title" style="margin-bottom:12px"> Dossier</div>
         <div>Statut : <span class="badge badge-{{ m.status_color }}">{{ m.get_status_display }}</span></div>
         <div style="color:var(--text-muted);font-size:.875rem;margin-top:8px">Créé le {{ m.created_at|date:"d/m/Y à H:i" }}</div>
         <div style="color:var(--text-muted);font-size:.875rem">Mis à jour {{ m.updated_at|date:"d/m/Y à H:i" }}</div>

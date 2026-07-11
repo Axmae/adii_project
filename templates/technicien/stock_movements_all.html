@@ -5,7 +5,7 @@
   <div class="page-header" style="display:flex;justify-content:space-between;align-items:flex-end;flex-wrap:wrap;gap:12px">
     <div>
       <a href="{% url 'stock_list' %}" style="color:var(--text-muted);text-decoration:none;font-size:.875rem">← Stock</a>
-      <h1 class="page-title" style="margin-top:8px">📋 Historique des mouvements</h1>
+      <h1 class="page-title" style="margin-top:8px"> Historique des mouvements</h1>
     </div>
   </div>
 
@@ -25,7 +25,7 @@
             <option value="sortie" {% if mvt_type == 'sortie' %}selected{% endif %}>Sorties ↓</option>
           </select>
         </div>
-        <button type="submit" class="btn btn-primary">🔍 Filtrer</button>
+        <button type="submit" class="btn btn-primary"> Filtrer</button>
         <a href="{% url 'stock_movements_all' %}" class="btn btn-outline">Réinitialiser</a>
       </form>
     </div>
@@ -74,7 +74,7 @@
             </tr>
             {% empty %}
             <tr><td colspan="8">
-              <div class="empty-state"><div class="empty-icon">📋</div><p>Aucun mouvement trouvé.</p></div>
+              <div class="empty-state"><div class="empty-icon"></div><p>Aucun mouvement trouvé.</p></div>
             </td></tr>
             {% endfor %}
           </tbody>

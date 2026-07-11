@@ -3,7 +3,7 @@
 {% block content %}
 <div class="container">
   <div class="page-header">
-    <h1 class="page-title">📜 Historique par agent</h1>
+    <h1 class="page-title"> Historique par agent</h1>
     <p class="page-subtitle">Consultez les demandes et retours d'effets par agent</p>
   </div>
   <div class="main-content">
@@ -37,7 +37,7 @@
 
     <!-- Boutons export -->
     <div style="display:flex;gap:10px;margin-bottom:20px;justify-content:flex-end">
-      <a href="{% url 'export_historique_excel' %}?{{ request.GET.urlencode }}" class="btn btn-success">📊 Export Excel</a>
+      <a href="{% url 'export_historique_excel' %}?{{ request.GET.urlencode }}" class="btn btn-success"> Export Excel</a>
       <a href="{% url 'export_historique_pdf' %}?{{ request.GET.urlencode }}" class="btn btn-danger">📄 Export PDF</a>
     </div>
 
@@ -46,7 +46,7 @@
     <div class="card" style="margin-bottom:20px">
       <div class="card-header">
         <span class="card-title">
-          👤 {{ h.agent.get_full_name }}
+           {{ h.agent.get_full_name }}
           <span style="color:var(--text-muted);font-weight:400;font-size:.85rem">
             · {{ h.agent.matricule|default:'N/A' }} · {{ h.agent.service|default:'N/A' }}
           </span>
@@ -111,7 +111,7 @@
     {% empty %}
     <div class="card">
       <div class="empty-state">
-        <div class="empty-icon">📭</div>
+        <div class="empty-icon"></div>
         <h3 style="margin-bottom:8px">Aucun résultat</h3>
         <p>Essayez de modifier les filtres.</p>
       </div>

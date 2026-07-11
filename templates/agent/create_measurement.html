@@ -18,12 +18,12 @@
            alt="Schéma des zones de mesure"
            style="width:100%;max-width:280px">
       <div style="margin-top:12px;background:var(--bg);border-radius:8px;padding:10px;text-align:left;font-size:.8rem;color:var(--text-muted);line-height:1.8">
-        <div>🟢 <strong>Poitrine</strong> — sous les aisselles</div>
-        <div>🟠 <strong>Taille</strong> — partie la plus fine</div>
-        <div>🔴 <strong>Hanches</strong> — partie la plus large</div>
-        <div>🔵 <strong>Épaules</strong> — d'une épaule à l'autre</div>
-        <div>🟣 <strong>Manche</strong> — épaule jusqu'au poignet</div>
-        <div>🩷 <strong>Entrejambe</strong> — entrejambe jusqu'au sol</div>
+        <div> <strong>Poitrine</strong> — sous les aisselles</div>
+        <div> <strong>Taille</strong> — partie la plus fine</div>
+        <div> <strong>Hanches</strong> — partie la plus large</div>
+        <div> <strong>Épaules</strong> — d'une épaule à l'autre</div>
+        <div> <strong>Manche</strong> — épaule jusqu'au poignet</div>
+        <div> <strong>Entrejambe</strong> — entrejambe jusqu'au sol</div>
       </div>
     </div>
 
@@ -93,7 +93,7 @@
         </div>
 
         <div style="display:flex;gap:12px">
-          <button type="submit" class="btn btn-primary btn-lg">{% if edit %}💾 Enregistrer{% else %}📤 Soumettre la fiche{% endif %}</button>
+          <button type="submit" class="btn btn-primary btn-lg">{% if edit %} Enregistrer{% else %} Soumettre la fiche{% endif %}</button>
           <a href="{% url 'agent_dashboard' %}" class="btn btn-outline btn-lg">Annuler</a>
         </div>
       </form>
