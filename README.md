@@ -1,16 +1,19 @@
 <p align="right">
-  <a href="README.en.md">English</a>
+  <a href="README.en.md">EN</a>
 </p>
 
-# ADII — Gestion d'habillement
-
-Application web Django pour la gestion des fiches de mesure et du stock d'habillement (Administration des Douanes et Impôts Indirects).
-
----
+<a href="#">
+  <p align="center">
+    <img src="https://github.com/Axmae/adii_project/blob/main/ADII_HEADER_README.svg" alt="ADII Header">
+  </p>
+</a>
+<h2 align="center">ADII — Gestion d'habillement</h2>
+<p align="center">Application web Django pour la gestion des fiches de mesure et du stock d'habillement (Administration des Douanes et Impôts Indirects).</p>
+<br/>
 
 ## Fonctionnalités
 
-- **3 espaces** : Agent, Administrateur, Technicien, Secrétaire
+- **4 espaces** : Agent, Administrateur, Technicien, Secrétaire
 - **Workflow** : en_attente → validé → en_production → prêt → livré
 - **Stock** avec alertes seuil bas
 - **Notifications** en temps réel
@@ -21,10 +24,15 @@ Application web Django pour la gestion des fiches de mesure et du stock d'habill
 ```bash
 pip install -r requirements.txt
 python manage.py migrate
+python manage.py populate_db
 python manage.py runserver
 ```
 
 Ouvrir http://127.0.0.1:8000
+
+## Configuration
+
+Voir [DEVELOPER.md](DEVELOPER.md) pour la base de donnees (PostgreSQL) et le setup complet Windows/Linux.
 
 ## Comptes de démonstration
 

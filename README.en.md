@@ -1,5 +1,5 @@
 <p align="right">
-  <a href="README.md">🇫🇷 Français</a>
+  <a href="README.md">FR</a>
 </p>
 
 <a href="#">
@@ -13,31 +13,24 @@
 
 ## Features
 
-- 👥 **3 separate workspaces** — Agent, Administrator, Technician
-- 📋 **Full workflow** — pending → validated → in_production → ready → delivered
-- 📦 **Stock management** with low-threshold alerts
-- 🔔 **Real-time notifications**
-- 👤 **Profiles & roles** managed by the admin
-- 🎨 **Role-adapted interface**
+- **4 workspaces**: Agent, Administrator, Technician, Secretary
+- **Workflow**: pending → validated → in_production → ready → delivered
+- **Stock management** with low-stock alerts
+- **Real-time notifications**
+- **Role-based access**
 
-## Installation
+## Quick start
 
 ```bash
 pip install -r requirements.txt
 python manage.py migrate
+python manage.py populate_db
 python manage.py runserver
 ```
 
-Then open **http://127.0.0.1:8000**
+Open http://127.0.0.1:8000
 
-## Quick Start
-
-1. **Log in** — Use one of the demo accounts
-2. **Create a form** — Fill in an agent's measurements
-3. **Track status** — The workflow goes through 5 stages
-4. **Manage stock** — View and update inventory
-
-## Demo Accounts
+## Demo accounts
 
 | Role | Email | Password |
 |------|-------|----------|
@@ -46,26 +39,6 @@ Then open **http://127.0.0.1:8000**
 | Agent | agent@adii.ma | Agent2026! |
 | Secretary | secretaire@adii.ma | Secretaire2026! |
 
-## Project Structure
+## Setup
 
-```
-.
-├── accounts/          # Users, auth, roles
-├── measurements/      # Measurement forms, workflow
-├── stock/             # Stock management
-├── notifications/     # Notification system
-├── templates/         # Role-based HTML templates
-├── static/            # CSS, JS, images
-├── settings.py        # Django configuration
-├── urls.py            # Main routing
-├── manage.py          # CLI entry point
-└── requirements.txt   # Dependencies
-```
-
-## Troubleshooting
-
-**Login issues?**  
-Check that the server is running and use the correct credentials.
-
-**Django commands?**  
-Use `python manage.py help` to list all available commands.
+See [DEVELOPER.md](DEVELOPER.md) for database setup on Windows/Linux and project configuration.
