@@ -8,59 +8,42 @@
       margin: 1.2cm 1.5cm;
       @bottom-center {
         content: "ADII — page " counter(page) " / " counter(pages);
-        font-size: 7pt;
-        color: #94a3b8;
+        font-size: 7pt; color: #94a3b8;
         font-family: Helvetica, Arial, sans-serif;
       }
     }
     body { font-family: Helvetica, Arial, sans-serif; font-size: 9pt; color: #1e293b; margin: 0; padding: 0; }
-
-    .header {
-      background: #1a3a6b;
-      border-radius: 6px; padding: 10px 16px; margin-bottom: 16px;
-      display: flex; align-items: center; gap: 14px;
-    }
-    .header img { height: 40px; }
-
+    .header { margin-bottom: 14px; }
+    .header img { height: 36px; }
     .report-info {
       display: flex; justify-content: space-between;
-      margin-bottom: 14px; padding-bottom: 8px;
-      border-bottom: 1px solid #e2e8f0;
+      margin-bottom: 12px; padding-bottom: 6px;
+      border-bottom: 1px solid #cbd5e1;
     }
-    .report-title { font-size: 13pt; font-weight: 700; color: #1a3a6b; }
-    .report-filters { font-size: 7.5pt; color: #64748b; }
-
+    .report-title { font-size: 11pt; font-weight: 700; color: #1e293b; }
+    .report-filters { font-size: 7pt; color: #64748b; }
     .agent-section {
-      margin-bottom: 16px; page-break-inside: avoid;
-      border: 1px solid #e2e8f0; border-radius: 6px; padding: 10px 12px;
+      margin-bottom: 14px; page-break-inside: avoid;
+      border: 1px solid #e2e8f0; border-radius: 4px; padding: 8px 10px;
     }
     .agent-header {
       display: flex; justify-content: space-between; align-items: center;
-      margin-bottom: 8px; padding-bottom: 6px;
+      margin-bottom: 6px; padding-bottom: 4px;
       border-bottom: 1px solid #f1f5f9;
     }
-    .agent-name { font-size: 11pt; font-weight: 700; color: #1a3a6b; }
-    .agent-info { font-size: 7pt; color: #64748b; }
-    .agent-badge { font-size: 7pt; font-weight: 600; padding: 2px 8px; border-radius: 10px; }
-    .agent-badge-blue { background: #dbeafe; color: #1e40af; }
-    .agent-badge-red { background: #fee2e2; color: #991b1b; }
-
-    h3 { font-size: 9pt; margin: 8px 0 5px; color: #334155; }
-    table { width: 100%; border-collapse: collapse; margin-bottom: 6px; font-size: 7.5pt; }
+    .agent-name { font-size: 10pt; font-weight: 700; color: #1e293b; }
+    .agent-info { font-size: 6.5pt; color: #64748b; }
+    .agent-badge { font-size: 6.5pt; padding: 1px 6px; border-radius: 8px; }
+    .agent-badge-gray { background: #f1f5f9; color: #475569; }
+    h3 { font-size: 8pt; margin: 6px 0 4px; color: #475569; font-weight: 600; }
+    table { width: 100%; border-collapse: collapse; margin-bottom: 4px; font-size: 7pt; }
     th {
-      padding: 5px 8px; text-align: left; font-weight: 600; font-size: 7pt;
-      letter-spacing: 0.3px; text-transform: uppercase;
+      padding: 4px 6px; text-align: left; font-weight: 600; font-size: 6.5pt;
+      background: #f1f5f9; color: #475569; border-bottom: 1px solid #cbd5e1;
     }
-    th.demande { background: #1a3a6b; color: white; }
-    th.retour  { background: #991b1b; color: white; }
-    td { padding: 4px 8px; border-bottom: 1px solid #e2e8f0; }
-    tr:nth-child(even) td { background: #f8fafc; }
-    .retour-row td { background: #fef2f2; }
-    .retour-row:nth-child(even) td { background: #fef6f6; }
-
-    .empty { color: #94a3b8; font-style: italic; padding: 6px 0; font-size: 8pt; }
-    .footer-text { margin-top: 12px; font-size: 6.5pt; color: #94a3b8; text-align: center; }
-    .page-break { page-break-before: always; }
+    td { padding: 3px 6px; border-bottom: 1px solid #f1f5f9; }
+    .empty { color: #94a3b8; font-style: italic; padding: 4px 0; font-size: 7pt; }
+    .footer-text { margin-top: 10px; font-size: 6pt; color: #94a3b8; text-align: center; }
   </style>
 </head>
 <body>
@@ -78,9 +61,7 @@
         {% if date_debut or date_fin %} • Du {{ date_debut|default:'...' }} au {{ date_fin|default:'...' }}{% endif %}
       </div>
     </div>
-    <div style="text-align:right;font-size:7pt;color:#94a3b8">
-      Document confidentiel
-    </div>
+    <div style="text-align:right;font-size:6.5pt;color:#94a3b8">Document confidentiel</div>
   </div>
 
   {% for h in historiques %}
@@ -89,14 +70,12 @@
       <div>
         <div class="agent-name">{{ h.agent.get_full_name }}</div>
         <div class="agent-info">
-          Matricule : {{ h.agent.matricule|default:'N/A' }} •
-          Service : {{ h.agent.service|default:'N/A' }} •
-          Email : {{ h.agent.email|default:'N/A' }}
+          Matricule : {{ h.agent.matricule|default:'N/A' }} • Service : {{ h.agent.service|default:'N/A' }} • Email : {{ h.agent.email }}
         </div>
       </div>
-      <div style="display:flex;gap:6px">
-        <span class="agent-badge agent-badge-blue">{{ h.measurements|length }} demande(s)</span>
-        <span class="agent-badge agent-badge-red">{{ h.retours|length }} retour(s)</span>
+      <div style="display:flex;gap:4px">
+        <span class="agent-badge agent-badge-gray">{{ h.measurements|length }} demande(s)</span>
+        <span class="agent-badge agent-badge-gray">{{ h.retours|length }} retour(s)</span>
       </div>
     </div>
 
@@ -104,28 +83,15 @@
     <h3>Demandes d'equipement</h3>
     <table>
       <thead><tr>
-        <th class="demande">Date</th>
-        <th class="demande">Type d'equipement</th>
-        <th class="demande">Statut</th>
-        <th class="demande">Rempli par</th>
+        <th>Date</th><th>Type d'equipement</th><th>Statut</th><th>Rempli par</th>
       </tr></thead>
       <tbody>
         {% for m in h.measurements %}
         <tr>
           <td style="color:#64748b">{{ m.created_at|date:"d/m/Y" }}</td>
           <td>{{ m.get_type_equipement_display }}</td>
-          <td>
-            <span style="
-              display:inline-block;padding:1px 7px;border-radius:3px;font-size:7pt;font-weight:600;
-              {% if m.status == 'livre' %}background:#d1fae5;color:#065f46
-              {% elif m.status == 'pret' %}background:#ccfbf1;color:#065f46
-              {% elif m.status == 'en_production' %}background:#ede9fe;color:#5b21b6
-              {% elif m.status == 'valide' %}background:#dbeafe;color:#1e40af
-              {% elif m.status == 'refuse' %}background:#fee2e2;color:#991b1b
-              {% else %}background:#fef3c7;color:#92400e{% endif %}
-            ">{{ m.get_status_display }}</span>
-          </td>
-          <td style="color:#64748b">{% if m.rempli_par %}{{ m.rempli_par.get_full_name|default:m.rempli_par.username }}{% else %}—{% endif %}</td>
+          <td>{{ m.get_status_display }}</td>
+          <td style="color:#64748b">{% if m.rempli_par %}{{ m.rempli_par.get_full_name }}{% else %}—{% endif %}</td>
         </tr>
         {% endfor %}
       </tbody>
@@ -136,27 +102,15 @@
     <h3>Retours d'effets</h3>
     <table>
       <thead><tr>
-        <th class="retour">Date</th>
-        <th class="retour">Type d'equipement</th>
-        <th class="retour">Quantite</th>
-        <th class="retour">Motif</th>
-        <th class="retour">Notes</th>
+        <th>Date</th><th>Type d'equipement</th><th>Quantite</th><th>Motif</th><th>Notes</th>
       </tr></thead>
       <tbody>
         {% for r in h.retours %}
-        <tr class="retour-row">
+        <tr>
           <td style="color:#64748b">{{ r.created_at|date:"d/m/Y" }}</td>
           <td>{{ r.get_type_equipement_display }}</td>
           <td><strong>{{ r.quantite }}</strong></td>
-          <td>
-            <span style="
-              display:inline-block;padding:1px 7px;border-radius:3px;font-size:7pt;font-weight:600;
-              {% if r.motif == 'destruction' %}background:#fee2e2;color:#991b1b
-              {% elif r.motif == 'perte' %}background:#fef3c7;color:#92400e
-              {% elif r.motif == 'usure' %}background:#e0e7ff;color:#3730a3
-              {% else %}background:#f1f5f9;color:#475569{% endif %}
-            ">{{ r.get_motif_display }}</span>
-          </td>
+          <td>{{ r.get_motif_display }}</td>
           <td style="color:#64748b">{{ r.notes|default:'—' }}</td>
         </tr>
         {% endfor %}
@@ -171,7 +125,7 @@
   {% endfor %}
 
   <div class="footer-text">
-    ADII — Administration des Douanes et Impots Indirects — Document genere automatiquement le {% now "d/m/Y" %}
+    ADII — Administration des Douanes et Impots Indirects — Document genere automatiquement
   </div>
 </body>
 </html>

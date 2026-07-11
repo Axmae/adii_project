@@ -1,6 +1,6 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib import messages
-from django.db.models import Sum, Q
+from django.db.models import Sum, Q, Count, F
 from .models import StockItem, StockMovement
 from notifications.utils import create_notification
 from django import forms
@@ -46,13 +46,20 @@ def role_required_tech_admin(view_func):
 @role_required_tech_admin
 def stock_list(request):
     items = StockItem.objects.all()
-    # Stats globales
-    total_items    = items.count()
-    total_quantity = items.aggregate(t=Sum('quantity'))['t'] or 0
-    low_stock      = items.filter(quantity__lt=models.F('min_threshold')).count()
-    out_of_stock   = items.filter(quantity=0).count()
+    # Stats globales — single query
+    from django.db.models import F as F_
+    stats = StockItem.objects.aggregate(
+        total_items=Count('id'),
+        total_quantity=Sum('quantity'),
+        low_stock=Count('id', filter=Q(quantity__lt=F_('min_threshold'))),
+        out_of_stock=Count('id', filter=Q(quantity=0)),
+    )
+    total_items    = stats['total_items']
+    total_quantity = stats['total_quantity'] or 0
+    low_stock      = stats['low_stock']
+    out_of_stock   = stats['out_of_stock']
     # Derniers mouvements
-    recent_movements = StockMovement.objects.select_related('stock_item', 'created_by').all()[:10]
+    recent_movements = StockMovement.objects.select_related('stock_item', 'created_by').order_by('-created_at')[:10]
     return render(request, 'technicien/stock.html', {
         'items': items,
         'total_items': total_items,
@@ -135,7 +142,7 @@ def stock_movement(request, pk):
 
 @role_required_tech_admin
 def stock_movements_all(request):
-    movements = StockMovement.objects.select_related('stock_item', 'created_by').all()
+    movements = StockMovement.objects.select_related('stock_item', 'created_by').order_by('-created_at')
     # Filtres
     mvt_type = request.GET.get('type', '')
     search   = request.GET.get('search', '')
@@ -147,10 +154,7 @@ def stock_movements_all(request):
             Q(note__icontains=search)
         )
     return render(request, 'technicien/stock_movements_all.html', {
-        'movements': movements,
+        'movements': movements[:200],
         'mvt_type': mvt_type,
         'search': search,
     })
-
-# Nécessaire pour le filtre F()
-from django.db import models

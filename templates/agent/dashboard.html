@@ -4,7 +4,7 @@
 <div class="container">
   <div class="page-header" style="display:flex;justify-content:space-between;align-items:flex-end;flex-wrap:wrap;gap:12px">
     <div>
-      <h1 class="page-title">Bonjour, {{ user.prenom|default:user.username }} 👋</h1>
+      <h1 class="page-title">Bonjour, {{ user.prenom|default:user.username }}</h1>
       <p class="page-subtitle">Matricule : {{ user.matricule|default:"—" }} · Service : {{ user.service|default:"—" }}</p>
     </div>
     <a href="{% url 'create_measurement' %}" class="btn btn-primary"> Nouvelle fiche</a>

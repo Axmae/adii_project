@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <style>
+    @page {
+      size: A4 portrait;
+      margin: 1.5cm 1.5cm;
+    }
+    body { font-family: Helvetica, Arial, sans-serif; font-size: 10pt; color: #1e293b; margin: 0; padding: 0; }
+    .header { text-align: center; margin-bottom: 24px; }
+    .header img { height: 40px; }
+    .title { font-size: 16pt; font-weight: 700; color: #1e293b; text-align: center; margin-bottom: 4px; }
+    .subtitle { font-size: 9pt; color: #64748b; text-align: center; margin-bottom: 24px; }
+    .line { border: none; border-top: 1px solid #cbd5e1; margin: 16px 0; }
+    .info-row { display: flex; justify-content: space-between; margin-bottom: 6px; font-size: 9pt; }
+    .info-label { color: #64748b; }
+    .info-value { font-weight: 600; }
+    table { width: 100%; border-collapse: collapse; margin: 16px 0; font-size: 9pt; }
+    th { padding: 6px 8px; text-align: left; font-weight: 600; font-size: 8pt; background: #f1f5f9; color: #475569; border-bottom: 1px solid #cbd5e1; }
+    td { padding: 5px 8px; border-bottom: 1px solid #f1f5f9; }
+    .signature { margin-top: 40px; }
+    .signature-line { width: 250px; border-top: 1px solid #1e293b; margin-top: 32px; padding-top: 6px; font-size: 8pt; color: #64748b; }
+    .footer { margin-top: 32px; font-size: 7pt; color: #94a3b8; text-align: center; }
+  </style>
+</head>
+<body>
+
+  <div class="header">
+    <img src="static/img/ADII_HEADER.svg" alt="ADII">
+  </div>
+
+  <div class="title">Bon de reception</div>
+  <div class="subtitle">Remise d'equipement d'habillement</div>
+
+  <hr class="line">
+
+  <div class="info-row">
+    <span class="info-label">Date de reception</span>
+    <span class="info-value">{{ date_remise }}</span>
+  </div>
+  <div class="info-row">
+    <span class="info-label">Responsable</span>
+    <span class="info-value">{{ responsable }}</span>
+  </div>
+
+  <hr class="line">
+
+  <h3 style="font-size: 10pt; margin: 12px 0 6px; color: #1e293b;">Agents servis</h3>
+
+  <table>
+    <thead><tr>
+      <th>Agent</th>
+      <th>Matricule</th>
+      <th>Equipement</th>
+    </tr></thead>
+    <tbody>
+      {% for f in fiches %}
+      <tr>
+        <td>{{ f.user.get_full_name }}</td>
+        <td>{{ f.user.matricule }}</td>
+        <td>{{ f.get_type_equipement_display }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+
+  <div class="signature">
+    <div class="signature-line">Signature du responsable</div>
+  </div>
+
+  <div class="footer">
+    ADII — Administration des Douanes et Impots Indirects — Document genere automatiquement
+  </div>
+</body>
+</html>

@@ -4,8 +4,8 @@ import urllib.parse
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
-from django.db.models import F, Q, Count
-from django.http import HttpResponse
+from django.db.models import F, Q, Count, Sum
+from django.http import HttpResponse, HttpResponseBadRequest
 from django.template.loader import render_to_string
 from .models import Measurement, RetourEffet
 from .forms import MeasurementForm, AdminNoteForm, RetourEffetForm
@@ -138,24 +138,24 @@ def secretaire_create(request):
 @role_required(['admin'])
 def admin_dashboard(request):
     from accounts.models import User
-    measurements = Measurement.objects.select_related('user').all()
-    stats = {
-        'total':         measurements.count(),
-        'en_attente':    measurements.filter(status='en_attente').count(),
-        'en_production': measurements.filter(status='en_production').count(),
-        'pret':          measurements.filter(status='pret').count(),
-        'livre':         measurements.filter(status='livre').count(),
-        'agents':        User.objects.filter(role='agent').count(),
-    }
+    stats_agg = Measurement.objects.aggregate(
+        total=Count('id'),
+        en_attente=Count('id', filter=Q(status='en_attente')),
+        en_production=Count('id', filter=Q(status='en_production')),
+        pret=Count('id', filter=Q(status='pret')),
+        livre=Count('id', filter=Q(status='livre')),
+    )
+    stats_agg['agents'] = User.objects.filter(role='agent').count()
+    measurements = Measurement.objects.select_related('user').order_by('-created_at')[:100]
     stock_alerts = StockItem.objects.filter(
         quantity__lt=F('min_threshold')
     ).order_by('quantity')
     recent_stock_movements = StockMovement.objects.select_related(
         'stock_item', 'created_by'
-    ).all()[:8]
+    ).order_by('-created_at')[:8]
     return render(request, 'admin_panel/dashboard.html', {
         'measurements':           measurements,
-        'stats':                  stats,
+        'stats':                  stats_agg,
         'stock_alerts':           stock_alerts,
         'recent_stock_movements': recent_stock_movements,
     })
@@ -219,8 +219,10 @@ def livraison_groupee(request):
     fiches_pretes = Measurement.objects.filter(
         status='pret'
     ).select_related('user').order_by('user__nom')
+    last_confirmed = request.session.pop('last_confirmed_ids', None)
     return render(request, 'admin_panel/livraison_groupee.html', {
         'fiches_pretes': fiches_pretes,
+        'last_confirmed_ids': ','.join(last_confirmed) if last_confirmed else '',
     })
 
 @role_required(['admin'])
@@ -230,7 +232,7 @@ def confirmer_livraison_groupee(request):
         if not ids:
             messages.warning(request, "Aucune fiche sélectionnée.")
             return redirect('livraison_groupee')
-        fiches = Measurement.objects.filter(pk__in=ids, status='pret')
+        fiches = Measurement.objects.filter(pk__in=ids, status='pret').select_related('user')
         count = fiches.count()
         for fiche in fiches:
             fiche.status = 'livre'
@@ -238,11 +240,12 @@ def confirmer_livraison_groupee(request):
             send_status_email(fiche)
             create_notification(
                 fiche.user,
-                'Tenue livrée ✅',
-                f"Votre tenue ({fiche.get_type_equipement_display()}) vous a été remise officiellement.",
+                'Tenue livree',
+                f"Votre tenue ({fiche.get_type_equipement_display()}) vous a ete remise officiellement.",
                 category='measurement'
             )
-        messages.success(request, f"{count} tenue(s) marquée(s) comme livrée(s).")
+        messages.success(request, f"{count} tenue(s) marquee(s) comme livree(s).")
+        request.session['last_confirmed_ids'] = ids
         return redirect('livraison_groupee')
     return redirect('livraison_groupee')
 
@@ -279,36 +282,47 @@ def confirmer_avancement_groupe(request):
         if new_status not in valid_statuses:
             messages.error(request, "Statut invalide.")
             return redirect('avancement_groupe')
-        fiches = Measurement.objects.filter(pk__in=ids)
+        fiches = Measurement.objects.filter(pk__in=ids).select_related('user')
         count  = fiches.count()
         status_labels = {
             'en_attente':    'En attente',
-            'valide':        'Validé',
+            'valide':        'Valide',
             'en_production': 'En production',
-            'pret':          'Prêt',
-            'livre':         'Livré',
-            'refuse':        'Refusé',
+            'pret':          'Pret',
+            'livre':         'Livre',
+            'refuse':        'Refuse',
         }
         notif_msgs = {
-            'valide':        "Votre fiche a été validée par le responsable.",
+            'valide':        "Votre fiche a ete validee par le responsable.",
             'en_production': "Votre tenue est en cours de fabrication.",
-            'pret':          "Votre tenue est prête ! Venez la récupérer.",
-            'livre':         "Votre tenue vous a été remise officiellement.",
-            'refuse':        "Votre demande a été refusée.",
-            'en_attente':    "Votre fiche a été remise en attente.",
+            'pret':          "Votre tenue est prete ! Venez la recuperer.",
+            'livre':         "Votre tenue vous a ete remise officiellement.",
+            'refuse':        "Votre demande a ete refusee.",
+            'en_attente':    "Votre fiche a ete remise en attente.",
         }
+        # Prefetch stock items for en_production case
+        categories = set()
+        for fiche in fiches:
+            if new_status == 'en_production':
+                categories.add(fiche.type_equipement)
+        stock_map = {}
+        if categories:
+            for si in StockItem.objects.filter(category__in=categories):
+                stock_map[si.category] = si
+
+        from accounts.models import User
         for fiche in fiches:
             fiche.status = new_status
             fiche.save()
             send_status_email(fiche)
             create_notification(
                 fiche.user,
-                f"Avancement mis à jour — {status_labels[new_status]}",
-                notif_msgs.get(new_status, "Votre dossier a été mis à jour."),
+                f"Avancement mis a jour — {status_labels[new_status]}",
+                notif_msgs.get(new_status, "Votre dossier a ete mis a jour."),
                 category='measurement'
             )
             if new_status == 'en_production':
-                item = StockItem.objects.filter(category=fiche.type_equipement).first()
+                item = stock_map.get(fiche.type_equipement)
                 if item and item.quantity > 0:
                     qty_before = item.quantity
                     item.quantity -= 1
@@ -320,16 +334,15 @@ def confirmer_avancement_groupe(request):
                         quantity=1,
                         quantity_before=qty_before,
                         quantity_after=item.quantity,
-                        note=f"Mise en production groupée — fiche #{fiche.pk} ({fiche.user.get_full_name()})",
+                        note=f"Mise en production groupee — fiche #{fiche.pk} ({fiche.user.get_full_name()})",
                         created_by=request.user,
                     )
                     if item.quantity < item.min_threshold:
-                        from accounts.models import User
                         for admin in User.objects.filter(role='admin'):
                             create_notification(
                                 admin,
-                                '⚠️ Stock bas',
-                                f"{item.name} ({item.size}) : {item.quantity} unités restantes.",
+                                'Stock bas',
+                                f"{item.name} ({item.size}) : {item.quantity} unites restantes.",
                                 category='stock'
                             )
         messages.success(request, f"{count} fiche(s) mise(s) à jour → {status_labels[new_status]}.")
@@ -427,34 +440,37 @@ def enregistrer_retour(request):
 # ─── HISTORIQUE PAR AGENT (Admin) ─────────────────────────
 @role_required(['admin'])
 def historique_agents(request):
+    from django.db.models import Prefetch
     from accounts.models import User
-    agents = User.objects.filter(role='agent').order_by('nom')
+
     agent_filter = request.GET.get('agent', '')
     date_debut = request.GET.get('date_debut', '')
     date_fin = request.GET.get('date_fin', '')
 
+    agents = User.objects.filter(role='agent').order_by('nom')
     if agent_filter:
         agents = agents.filter(pk=agent_filter)
 
-    historiques = []
-    for agent in agents:
-        measurements = Measurement.objects.filter(user=agent)
-        retours = RetourEffet.objects.filter(agent=agent)
-        if date_debut:
-            measurements = measurements.filter(created_at__date__gte=date_debut)
-            retours = retours.filter(created_at__date__gte=date_debut)
-        if date_fin:
-            measurements = measurements.filter(created_at__date__lte=date_fin)
-            retours = retours.filter(created_at__date__lte=date_fin)
-        historiques.append({
-            'agent': agent,
-            'measurements': measurements,
-            'retours': retours,
-        })
+    m_qs = Measurement.objects.select_related('rempli_par')
+    r_qs = RetourEffet.objects.all()
+    if date_debut:
+        m_qs = m_qs.filter(created_at__date__gte=date_debut)
+        r_qs = r_qs.filter(created_at__date__gte=date_debut)
+    if date_fin:
+        m_qs = m_qs.filter(created_at__date__lte=date_fin)
+        r_qs = r_qs.filter(created_at__date__lte=date_fin)
 
+    agents = agents.prefetch_related(
+        Prefetch('measurements', queryset=m_qs),
+        Prefetch('retours', queryset=r_qs),
+    )
+
+    historiques = [{'agent': a, 'measurements': a.measurements.all(), 'retours': a.retours.all()} for a in agents]
+
+    all_agents = User.objects.filter(role='agent').order_by('nom')
     return render(request, 'admin_panel/historique.html', {
         'historiques': historiques,
-        'agents': User.objects.filter(role='agent').order_by('nom'),
+        'agents': all_agents,
         'agent_filter': agent_filter,
         'date_debut': date_debut,
         'date_fin': date_fin,
@@ -582,22 +598,28 @@ def export_historique_excel(request):
     date_debut_val = request.GET.get('date_debut', '')
     date_fin_val = request.GET.get('date_fin', '')
 
+    from django.db.models import Prefetch
     agents_qs = User.objects.filter(role='agent').order_by('nom')
     if agent_filter_val:
         agents_qs = agents_qs.filter(pk=agent_filter_val)
 
-    for agent in agents_qs:
-        measurements = Measurement.objects.filter(user=agent)
-        retours = RetourEffet.objects.filter(agent=agent)
-        if date_debut_val:
-            measurements = measurements.filter(created_at__date__gte=date_debut_val)
-            retours = retours.filter(created_at__date__gte=date_debut_val)
-        if date_fin_val:
-            measurements = measurements.filter(created_at__date__lte=date_fin_val)
-            retours = retours.filter(created_at__date__lte=date_fin_val)
+    m_qs = Measurement.objects.all()
+    r_qs = RetourEffet.objects.all()
+    if date_debut_val:
+        m_qs = m_qs.filter(created_at__date__gte=date_debut_val)
+        r_qs = r_qs.filter(created_at__date__gte=date_debut_val)
+    if date_fin_val:
+        m_qs = m_qs.filter(created_at__date__lte=date_fin_val)
+        r_qs = r_qs.filter(created_at__date__lte=date_fin_val)
 
-        measurements = list(measurements)
-        retours = list(retours)
+    agents_qs = agents_qs.prefetch_related(
+        Prefetch('measurements', queryset=m_qs),
+        Prefetch('retours', queryset=r_qs),
+    )
+
+    for agent in agents_qs:
+        measurements = list(agent.measurements.all())
+        retours = list(agent.retours.all())
         max_rows = max(len(measurements), len(retours), 1)
 
         for i in range(max_rows):
@@ -686,52 +708,16 @@ def _draw_header(canvas, doc):
     from reportlab.lib.pagesizes import A4, landscape
     w, h = landscape(A4)
     canvas.saveState()
-    # Header background
     canvas.setFillColor(colors.HexColor('#1A3A6B'))
-    canvas.roundRect(0.8*cm, h - 1.6*cm, w - 1.6*cm, 1.1*cm, 4, fill=1, stroke=0)
-    # Logo shield
-    canvas.setFillColor(colors.HexColor('#C8A84B'))
-    cx, cy = 1.5*cm, h - 1.05*cm
-    canvas.setStrokeColor(colors.HexColor('#A8882B'))
-    canvas.setLineWidth(1.2)
-    p = canvas.beginPath()
-    p.moveTo(cx-12, cy-10)
-    p.lineTo(cx, cy-18)
-    p.lineTo(cx+12, cy-10)
-    p.lineTo(cx+12, cy+8)
-    p.lineTo(cx, cy+18)
-    p.lineTo(cx-12, cy+8)
-    p.close()
-    canvas.drawPath(p, fill=1, stroke=1)
-    canvas.setFillColor(colors.HexColor('#1A3A6B'))
-    canvas.setFont('Times-Bold', 9)
-    canvas.drawCentredString(cx, cy-5, 'ADII')
-    # Title
+    canvas.roundRect(0.8*cm, h - 1.4*cm, w - 1.6*cm, 0.9*cm, 4, fill=1, stroke=0)
     canvas.setFillColor(colors.white)
-    canvas.setFont('Helvetica-Bold', 13)
-    canvas.drawString(2.5*cm, h - 1.35*cm, 'ADII — Gestion d\'habillement')
-    canvas.setFont('Helvetica', 7)
-    canvas.setFillColor(colors.HexColor('#B0C4DE'))
-    canvas.drawString(2.5*cm, h - 1.55*cm, 'Administration des Douanes et Impôts Indirects')
-    # Divider
-    canvas.setStrokeColor(colors.HexColor('#B0C4DE'))
-    canvas.setLineWidth(0.5)
-    canvas.line(10.5*cm, h - 1.05*cm, 10.5*cm, h - 1.55*cm)
-    # Right side
-    canvas.setFillColor(colors.HexColor('#B0C4DE'))
-    canvas.setFont('Helvetica-Bold', 7)
-    canvas.drawRightString(w - 1.5*cm, h - 1.2*cm, 'RAPPORT')
-    canvas.setStrokeColor(colors.HexColor('#C8A84B'))
-    canvas.setLineWidth(2)
-    canvas.line(w - 3.5*cm, h - 1.28*cm, w - 1.5*cm, h - 1.28*cm)
-    canvas.setFillColor(colors.HexColor('#90A4C4'))
+    canvas.setFont('Helvetica-Bold', 11)
+    canvas.drawString(1.5*cm, h - 1.1*cm, 'ADII')
     canvas.setFont('Helvetica', 6.5)
-    canvas.drawRightString(w - 1.5*cm, h - 1.45*cm, 'Historique par agent')
-    # Footer
+    canvas.drawString(1.5*cm, h - 1.35*cm, 'Administration des Douanes et Impots Indirects')
+    canvas.setFont('Helvetica', 6)
     canvas.setFillColor(colors.HexColor('#94A3B8'))
-    canvas.setFont('Helvetica', 6.5)
-    canvas.drawCentredString(w/2, 0.5*cm,
-        f'ADII — Administration des Douanes et Impôts Indirects — Page {doc.page} / {{TBD}}')
+    canvas.drawCentredString(w/2, 0.5*cm, f'ADII — Page {doc.page}')
     canvas.restoreState()
 
 
@@ -754,43 +740,34 @@ def _render_pdf_reportlab(historiques, agents, agent_filter, date_debut, date_fi
 
     title_style = ParagraphStyle(
         'ReportTitle', parent=styles['Title'],
-        fontSize=13, textColor=colors.HexColor('#1A3A6B'),
+        fontSize=12, textColor=colors.HexColor('#1e293b'),
         spaceAfter=2, spaceBefore=2,
     )
     subtitle_style = ParagraphStyle(
         'ReportSub', parent=styles['Normal'],
-        fontSize=7.5, textColor=colors.HexColor('#64748B'),
-        spaceAfter=14,
+        fontSize=7, textColor=colors.HexColor('#64748B'),
+        spaceAfter=12,
     )
     agent_heading = ParagraphStyle(
         'AgentHead', parent=styles['Heading2'],
-        fontSize=10, textColor=colors.HexColor('#1A3A6B'),
+        fontSize=9, textColor=colors.HexColor('#1e293b'),
         spaceBefore=4, spaceAfter=2,
     )
     section_label = ParagraphStyle(
         'SectionLbl', parent=styles['Normal'],
-        fontSize=9, textColor=colors.HexColor('#334155'),
-        spaceBefore=6, spaceAfter=2,
+        fontSize=8, textColor=colors.HexColor('#475569'),
+        spaceBefore=4, spaceAfter=2,
     )
 
     elements = []
 
-    # Report info line
     from datetime import datetime
     elements.append(Paragraph("Historique par agent", title_style))
-    filter_parts = [f"Généré le {datetime.now().strftime('%d/%m/%Y %H:%M')}"]
-    filter_parts.append('Agent spécifique' if agent_filter else 'Tous les agents')
+    filter_parts = [f"Genere le {datetime.now().strftime('%d/%m/%Y %H:%M')}"]
+    filter_parts.append('Agent specifique' if agent_filter else 'Tous les agents')
     if date_debut or date_fin:
         filter_parts.append(f"Du {date_debut or '...'} au {date_fin or '...'}")
-    elements.append(Paragraph(' · '.join(filter_parts), subtitle_style))
-    # Separator
-    sep_data = [['', '']]
-    sep_table = Table(sep_data, colWidths=[landscape(A4)[0] - 2.4*cm, 0])
-    sep_table.setStyle(TableStyle([
-        ('LINEBELOW', (0, 0), (-1, -1), 1.5, colors.HexColor('#E2E8F0')),
-    ]))
-    elements.append(sep_table)
-    elements.append(Spacer(1, 3))
+    elements.append(Paragraph(' • '.join(filter_parts), subtitle_style))
 
     for h in historiques:
         agent = h['agent']
@@ -804,10 +781,10 @@ def _render_pdf_reportlab(historiques, agents, agent_filter, date_debut, date_fi
         elements.append(Paragraph(agent_info + badge_text, agent_heading))
 
         if measurements:
-            elements.append(Paragraph("<b>📋 Demandes d'équipement</b>", section_label))
-            data = [["Date", "Type d'équipement", "Statut", "Rempli par"]]
+            elements.append(Paragraph("Demandes d'equipement", section_label))
+            data = [["Date", "Type d'equipement", "Statut", "Rempli par"]]
             for m in measurements:
-                rempli = m.rempli_par.get_full_name() or m.rempli_par.username if m.rempli_par else '—'
+                rempli = m.rempli_par.get_full_name() if m.rempli_par else '—'
                 data.append([
                     m.created_at.strftime('%d/%m/%Y'),
                     m.get_type_equipement_display(),
@@ -816,22 +793,20 @@ def _render_pdf_reportlab(historiques, agents, agent_filter, date_debut, date_fi
                 ])
             table = Table(data, colWidths=[70, 130, 90, 100])
             table.setStyle(TableStyle([
-                ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#1A3A6B')),
-                ('TEXTCOLOR', (0, 0), (-1, 0), colors.white),
+                ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#f1f5f9')),
+                ('TEXTCOLOR', (0, 0), (-1, 0), colors.HexColor('#475569')),
                 ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
                 ('FONTSIZE', (0, 0), (-1, -1), 7),
-                ('FONTNAME', (0, 1), (-1, -1), 'Helvetica'),
-                ('GRID', (0, 0), (-1, -1), 0.4, colors.HexColor('#CBD5E1')),
-                ('ROWBACKGROUNDS', (0, 1), (-1, -1), [colors.white, colors.HexColor('#F8FAFC')]),
-                ('TOPPADDING', (0, 0), (-1, -1), 3),
-                ('BOTTOMPADDING', (0, 0), (-1, -1), 3),
+                ('GRID', (0, 0), (-1, -1), 0.4, colors.HexColor('#e2e8f0')),
+                ('TOPPADDING', (0, 0), (-1, -1), 2),
+                ('BOTTOMPADDING', (0, 0), (-1, -1), 2),
             ]))
             elements.append(table)
-            elements.append(Spacer(1, 4))
+            elements.append(Spacer(1, 3))
 
         if retours:
-            elements.append(Paragraph("<b>🔄 Retours d'effets</b>", section_label))
-            data = [["Date", "Type d'équipement", "Qté", "Motif", "Notes"]]
+            elements.append(Paragraph("Retours d'effets", section_label))
+            data = [["Date", "Type d'equipement", "Qte", "Motif", "Notes"]]
             for r in retours:
                 data.append([
                     r.created_at.strftime('%d/%m/%Y'),
@@ -840,22 +815,20 @@ def _render_pdf_reportlab(historiques, agents, agent_filter, date_debut, date_fi
                     r.get_motif_display(),
                     r.notes or '—',
                 ])
-            table = Table(data, colWidths=[70, 130, 40, 70, 90])
+            table = Table(data, colWidths=[70, 130, 30, 70, 90])
             table.setStyle(TableStyle([
-                ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#991B1B')),
-                ('TEXTCOLOR', (0, 0), (-1, 0), colors.white),
+                ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#f1f5f9')),
+                ('TEXTCOLOR', (0, 0), (-1, 0), colors.HexColor('#475569')),
                 ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
                 ('FONTSIZE', (0, 0), (-1, -1), 7),
-                ('FONTNAME', (0, 1), (-1, -1), 'Helvetica'),
-                ('GRID', (0, 0), (-1, -1), 0.4, colors.HexColor('#CBD5E1')),
-                ('ROWBACKGROUNDS', (0, 1), (-1, -1), [colors.HexColor('#FFF5F5'), colors.HexColor('#FFF0F0')]),
-                ('TOPPADDING', (0, 0), (-1, -1), 3),
-                ('BOTTOMPADDING', (0, 0), (-1, -1), 3),
+                ('GRID', (0, 0), (-1, -1), 0.4, colors.HexColor('#e2e8f0')),
+                ('TOPPADDING', (0, 0), (-1, -1), 2),
+                ('BOTTOMPADDING', (0, 0), (-1, -1), 2),
             ]))
             elements.append(table)
-            elements.append(Spacer(1, 4))
+            elements.append(Spacer(1, 3))
 
-        elements.append(Spacer(1, 6))
+        elements.append(Spacer(1, 4))
 
     doc.build(elements, onFirstPage=_draw_header, onLaterPages=_draw_header)
     buffer.seek(0)
@@ -864,30 +837,31 @@ def _render_pdf_reportlab(historiques, agents, agent_filter, date_debut, date_fi
 
 @role_required(['admin'])
 def export_historique_pdf(request):
+    from django.db.models import Prefetch
     from accounts.models import User
-    agent_filter = request.GET.get('agent', '')
     date_debut = request.GET.get('date_debut', '')
     date_fin = request.GET.get('date_fin', '')
+    agent_filter = request.GET.get('agent', '')
 
     agents_qs = User.objects.filter(role='agent').order_by('nom')
     if agent_filter:
         agents_qs = agents_qs.filter(pk=agent_filter)
 
-    historiques = []
-    for agent in agents_qs:
-        measurements = Measurement.objects.filter(user=agent)
-        retours = RetourEffet.objects.filter(agent=agent)
-        if date_debut:
-            measurements = measurements.filter(created_at__date__gte=date_debut)
-            retours = retours.filter(created_at__date__gte=date_debut)
-        if date_fin:
-            measurements = measurements.filter(created_at__date__lte=date_fin)
-            retours = retours.filter(created_at__date__lte=date_fin)
-        historiques.append({
-            'agent': agent,
-            'measurements': measurements,
-            'retours': retours,
-        })
+    m_qs = Measurement.objects.select_related('rempli_par')
+    r_qs = RetourEffet.objects.all()
+    if date_debut:
+        m_qs = m_qs.filter(created_at__date__gte=date_debut)
+        r_qs = r_qs.filter(created_at__date__gte=date_debut)
+    if date_fin:
+        m_qs = m_qs.filter(created_at__date__lte=date_fin)
+        r_qs = r_qs.filter(created_at__date__lte=date_fin)
+
+    agents_qs = agents_qs.prefetch_related(
+        Prefetch('measurements', queryset=m_qs),
+        Prefetch('retours', queryset=r_qs),
+    )
+
+    historiques = [{'agent': a, 'measurements': a.measurements.all(), 'retours': a.retours.all()} for a in agents_qs]
 
     try:
         import weasyprint
@@ -911,7 +885,95 @@ def export_historique_pdf(request):
 
 @login_required
 def measurement_detail(request, pk):
-    m = get_object_or_404(Measurement, pk=pk)
+    m = get_object_or_404(Measurement.objects.select_related('user', 'rempli_par'), pk=pk)
     if request.user.role == 'agent' and m.user != request.user:
         return redirect('home')
     return render(request, 'measurement_detail.html', {'m': m})
+
+
+@login_required
+@role_required(['admin'])
+def reception_pdf(request):
+    ids = request.GET.get('ids', '')
+    if not ids:
+        return HttpResponseBadRequest("Missing ids parameter")
+
+    pk_list = [int(x) for x in ids.split(',') if x.isdigit()]
+    fiches = Measurement.objects.filter(pk__in=pk_list, status__in=['termine', 'livre']).select_related('user')
+
+    if not fiches.exists():
+        return HttpResponseBadRequest("No matching records found")
+
+    from datetime import datetime
+    try:
+        import weasyprint
+        from pathlib import Path
+        html = render_to_string('admin_panel/reception_pdf.html', {
+            'fiches': fiches,
+            'date_remise': datetime.now().strftime('%d/%m/%Y %H:%M'),
+            'responsable': request.user.get_full_name() or request.user.username,
+        })
+        pdf = weasyprint.HTML(string=html, base_url=Path(__file__).resolve().parent.parent).write_pdf()
+        response = HttpResponse(pdf, content_type='application/pdf')
+        response['Content-Disposition'] = 'attachment; filename="bon_reception.pdf"'
+        return response
+    except (ImportError, OSError):
+        from reportlab.lib.pagesizes import A4
+        from reportlab.lib.units import cm
+        from reportlab.lib import colors
+        from reportlab.pdfgen import canvas as rl_canvas
+
+        buffer = io.BytesIO()
+        c = rl_canvas.Canvas(buffer, pagesize=A4)
+        w, h = A4
+
+        c.setFillColor(colors.HexColor('#1e293b'))
+        c.setFont('Helvetica-Bold', 16)
+        c.drawCentredString(w/2, h - 2*cm, 'Bon de reception')
+
+        c.setFont('Helvetica', 9)
+        c.drawCentredString(w/2, h - 2.8*cm, 'Remise d\'equipement d\'habillement')
+
+        c.setStrokeColor(colors.HexColor('#cbd5e1'))
+        c.line(2*cm, h - 3.5*cm, w - 2*cm, h - 3.5*cm)
+
+        c.setFont('Helvetica', 9)
+        c.drawString(2*cm, h - 4.2*cm, f'Date: {datetime.now().strftime("%d/%m/%Y %H:%M")}')
+        c.drawString(2*cm, h - 4.7*cm, f'Responsable: {request.user.get_full_name() or request.user.username}')
+
+        c.line(2*cm, h - 5.2*cm, w - 2*cm, h - 5.2*cm)
+
+        y = h - 5.8*cm
+        c.setFont('Helvetica-Bold', 9)
+        c.drawString(2*cm, y, 'Agent')
+        c.drawString(6*cm, y, 'Matricule')
+        c.drawString(10*cm, y, 'Equipement')
+        y -= 0.5*cm
+        c.setStrokeColor(colors.HexColor('#e2e8f0'))
+        c.line(2*cm, y, w - 2*cm, y)
+        y -= 0.3*cm
+
+        c.setFont('Helvetica', 9)
+        for f in fiches:
+            if y < 3*cm:
+                c.showPage()
+                y = h - 2*cm
+                c.setFont('Helvetica-Bold', 9)
+                c.drawString(2*cm, y, 'Agent')
+                c.drawString(6*cm, y, 'Matricule')
+                c.drawString(10*cm, y, 'Equipement')
+                y -= 0.5*cm
+                c.line(2*cm, y, w - 2*cm, y)
+                y -= 0.3*cm
+                c.setFont('Helvetica', 9)
+            c.drawString(2*cm, y, f.user.get_full_name())
+            c.drawString(6*cm, y, f.user.matricule or '—')
+            c.drawString(10*cm, y, f.get_type_equipement_display())
+            y -= 0.5*cm
+
+        c.showPage()
+        c.save()
+        buffer.seek(0)
+        response = HttpResponse(buffer, content_type='application/pdf')
+        response['Content-Disposition'] = 'attachment; filename="bon_reception.pdf"'
+        return response

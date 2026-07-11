@@ -14,6 +14,7 @@ urlpatterns = [
     path('admin-dashboard/utilisateurs/<int:user_id>/role/', views.change_role, name='change_role'),
     path('admin-dashboard/livraison-groupee/', views.livraison_groupee, name='livraison_groupee'),
     path('admin-dashboard/livraison-groupee/confirmer/', views.confirmer_livraison_groupee, name='confirmer_livraison_groupee'),
+    path('admin-dashboard/livraison-groupee/reception/', views.reception_pdf, name='reception_pdf'),
     path('admin-dashboard/avancement-groupe/', views.avancement_groupe, name='avancement_groupe'),
     path('admin-dashboard/avancement-groupe/confirmer/', views.confirmer_avancement_groupe, name='confirmer_avancement_groupe'),
     path('admin-dashboard/historique/', views.historique_agents, name='historique_agents'),

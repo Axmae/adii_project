@@ -38,7 +38,7 @@
     <!-- Boutons export -->
     <div style="display:flex;gap:10px;margin-bottom:20px;justify-content:flex-end">
       <a href="{% url 'export_historique_excel' %}?{{ request.GET.urlencode }}" class="btn btn-success"> Export Excel</a>
-      <a href="{% url 'export_historique_pdf' %}?{{ request.GET.urlencode }}" class="btn btn-danger">📄 Export PDF</a>
+      <a href="{% url 'export_historique_pdf' %}?{{ request.GET.urlencode }}" class="btn btn-danger">Export PDF</a>
     </div>
 
     <!-- Résultats -->
