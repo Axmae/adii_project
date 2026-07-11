@@ -1,14 +1,20 @@
-# ADII — Gestion d'habillement (Django)
+<p align="right">
+  <a href="README.en.md">English</a>
+</p>
 
-Réplique complète de https://adii-garment-buddy.lovable.app avec Django.
+# ADII — Gestion d'habillement
 
-## Comptes de démonstration
+Application web Django pour la gestion des fiches de mesure et du stock d'habillement (Administration des Douanes et Impôts Indirects).
 
-| Rôle | Email | Mot de passe |
-|------|-------|-------------|
-| Administrateur | admin@adii.ma | Admin2026! |
-| Technicien | tech@adii.ma | Tech2026! |
-| Agent | agent@adii.ma | Agent2026! |
+---
+
+## Fonctionnalités
+
+- **3 espaces** : Agent, Administrateur, Technicien, Secrétaire
+- **Workflow** : en_attente → validé → en_production → prêt → livré
+- **Stock** avec alertes seuil bas
+- **Notifications** en temps réel
+- **Rôles** gérés par l'admin
 
 ## Installation
 
@@ -18,29 +24,30 @@ python manage.py migrate
 python manage.py runserver
 ```
 
-Puis ouvrir http://127.0.0.1:8000
+Ouvrir http://127.0.0.1:8000
+
+## Comptes de démonstration
+
+| Rôle | Email | Mot de passe |
+|------|-------|-------------|
+| Administrateur | admin@adii.ma | Admin2026! |
+| Technicien | tech@adii.ma | Tech2026! |
+| Agent | agent@adii.ma | Agent2026! |
+| Secrétaire | secretaire@adii.ma | Secretaire2026! |
 
 ## Structure
 
 ```
 .
-├── accounts/          # Utilisateurs, auth, rôles
+├── accounts/          # Auth, profils, rôles
 ├── measurements/      # Fiches de mesure, workflow
 ├── stock/             # Gestion du stock
-├── notifications/     # Système de notifications
-├── templates/         # Templates HTML par rôle
+├── notifications/     # Notifications, emails
+├── templates/         # HTML par rôle
 ├── static/            # CSS, JS, images
-├── settings.py        # Configuration Django
-├── urls.py            # Routage principal
-├── manage.py          # Point d'entrée CLI
-└── requirements.txt   # Dépendances
+├── settings.py
+├── urls.py
+├── manage.py
+├── requirements.txt
+└── .env.example
 ```
-
-## Fonctionnalités
-
-- **3 espaces distincts** : Agent, Administrateur, Technicien
-- **Workflow complet** : en_attente → validé → en_production → prêt → livré
-- **Gestion du stock** avec alertes seuil bas
-- **Notifications** en temps réel (sans WebSocket — polling-ready)
-- **Gestion des rôles** par l'admin
-- **Interface Django Admin** sur /admin/
