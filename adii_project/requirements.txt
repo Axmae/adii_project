@@ -1,7 +1,9 @@
 Django>=4.2,<5.0
+python-dotenv>=1.0
 Pillow>=10.0
 psycopg2
 psycopg2-binary
 openpyxl>=3.1
 weasyprint>=60
 reportlab>=4.0
+# sendgrid>=6.0  # optional — SendGrid Web API
