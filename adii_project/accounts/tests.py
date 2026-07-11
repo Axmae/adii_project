@@ -1,6 +1,9 @@
+from unittest.mock import patch
+
 from django.test import TestCase, Client
 from django.urls import reverse
 from django.contrib.auth import get_user_model
+from django.core import mail
 from .models import User
 from .views import get_redirect
 
@@ -123,7 +126,8 @@ class AuthViewsTest(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, 'Accès refusé')
 
-    def test_register_creates_agent(self):
+    @patch('accounts.views.send_welcome_email')
+    def test_register_creates_agent(self, mock_welcome):
         response = self.client.post(reverse('auth'), {
             'action': 'register',
             'email': 'new@test.com',
@@ -136,6 +140,20 @@ class AuthViewsTest(TestCase):
         user = UserModel.objects.get(email='new@test.com')
         self.assertEqual(user.role, 'agent')
         self.assertEqual(user.username, 'new@test.com')
+        mock_welcome.assert_called_once_with(user)
+
+    @patch('accounts.views.send_welcome_email')
+    def test_register_sends_welcome_email(self, mock_welcome):
+        self.client.post(reverse('auth'), {
+            'action': 'register',
+            'email': 'new2@test.com',
+            'nom': 'Test', 'prenom': 'User',
+            'matricule': 'M002', 'service': 'IT',
+            'password1': 'ComplexPass123!',
+            'password2': 'ComplexPass123!',
+        })
+        user = UserModel.objects.get(email='new2@test.com')
+        mock_welcome.assert_called_once_with(user)
 
     def test_logout(self):
         self.client.login(username='agent@test.com', password='pass1234')
@@ -167,3 +185,52 @@ class AuthViewsTest(TestCase):
         response = self.client.get(reverse('home'))
         self.assertEqual(response.status_code, 200)
         self.assertTemplateUsed(response, 'home.html')
+
+
+class PasswordResetTest(TestCase):
+    def setUp(self):
+        self.client = Client()
+        self.user = UserModel.objects.create_user(
+            username='agent@test.com', email='agent@test.com',
+            password='pass1234', role='agent',
+            nom='Dupont', prenom='Jean'
+        )
+
+    def test_password_reset_form_page(self):
+        response = self.client.get(reverse('password_reset'))
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, 'registration/password_reset_form.html')
+
+    def test_password_reset_submit_sends_email(self):
+        response = self.client.post(reverse('password_reset'), {'email': 'agent@test.com'})
+        self.assertRedirects(response, reverse('password_reset_done'))
+        self.assertEqual(len(mail.outbox), 1)
+        self.assertIn('agent@test.com', mail.outbox[0].to)
+        self.assertIn('Réinitialisation', mail.outbox[0].subject)
+
+    def test_password_reset_done_page(self):
+        response = self.client.get(reverse('password_reset_done'))
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, 'registration/password_reset_done.html')
+
+    def test_password_reset_confirm_page_invalid_link(self):
+        response = self.client.get(
+            reverse('password_reset_confirm', args=['invalid', 'invalid'])
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, 'registration/password_reset_confirm.html')
+
+    def test_password_reset_complete_page(self):
+        response = self.client.get(reverse('password_reset_complete'))
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, 'registration/password_reset_complete.html')
+
+    def test_auth_page_has_forgot_password_link(self):
+        response = self.client.get(reverse('auth'))
+        self.assertContains(response, 'Mot de passe oublié')
+        self.assertContains(response, reverse('password_reset'))
+
+    def test_password_reset_submit_unknown_email_no_email(self):
+        response = self.client.post(reverse('password_reset'), {'email': 'unknown@test.com'})
+        self.assertRedirects(response, reverse('password_reset_done'))
+        self.assertEqual(len(mail.outbox), 0)

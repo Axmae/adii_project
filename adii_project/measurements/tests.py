@@ -1,3 +1,5 @@
+from unittest.mock import patch
+
 from django.test import TestCase, Client
 from django.urls import reverse
 from django.contrib.auth import get_user_model
@@ -92,7 +94,7 @@ class AgentFlowTest(TestCase):
         self.client = Client()
         self.agent = UserModel.objects.create_user(
             username='agent@test.com', password='pass', role='agent',
-            nom='Dupont', prenom='Jean'
+            nom='Dupont', prenom='Jean', email='agent@test.com'
         )
         self.admin = UserModel.objects.create_user(
             username='admin@test.com', password='pass', role='admin'
@@ -130,7 +132,18 @@ class AgentFlowTest(TestCase):
         self.assertEqual(m.user, self.agent)
         self.assertEqual(m.rempli_par, self.agent)
 
-    def test_create_measurement_notifies_admins(self):
+    @patch('measurements.views.send_status_email')
+    def test_create_measurement_sends_email(self, mock_email):
+        self.client.post(reverse('create_measurement'), {
+            'type_equipement': 'uniforme_ete',
+            'tour_poitrine': 100, 'tour_taille': 80, 'tour_hanches': 90,
+            'epaules': 45, 'manche': 60, 'entrejambe': 75,
+        })
+        m = Measurement.objects.first()
+        mock_email.assert_called_once_with(m)
+
+    @patch('measurements.views.send_status_email')
+    def test_create_measurement_notifies_admins(self, mock_email):
         self.client.post(reverse('create_measurement'), {
             'type_equipement': 'uniforme_ete',
             'tour_poitrine': 100, 'tour_taille': 80, 'tour_hanches': 90,
@@ -213,7 +226,7 @@ class SecretaireFlowTest(TestCase):
         self.client = Client()
         self.agent = UserModel.objects.create_user(
             username='agent@test.com', password='pass', role='agent',
-            nom='Dupont', prenom='Jean'
+            nom='Dupont', prenom='Jean', email='agent@test.com'
         )
         self.secretaire = UserModel.objects.create_user(
             username='sec@test.com', password='pass', role='secretaire',
@@ -231,7 +244,8 @@ class SecretaireFlowTest(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, 'Veste')
 
-    def test_secretaire_create_for_agent(self):
+    @patch('measurements.views.send_status_email')
+    def test_secretaire_create_for_agent(self, mock_email):
         response = self.client.post(reverse('secretaire_create'), {
             'agent_id': self.agent.pk,
             'type_equipement': 'uniforme_hiver',
@@ -242,6 +256,7 @@ class SecretaireFlowTest(TestCase):
         m = Measurement.objects.first()
         self.assertEqual(m.user, self.agent)
         self.assertEqual(m.rempli_par, self.secretaire)
+        mock_email.assert_called_once_with(m)
 
     def test_secretaire_create_blocked_if_agent_has_active(self):
         Measurement.objects.create(
@@ -264,7 +279,7 @@ class AdminFlowTest(TestCase):
         self.client = Client()
         self.agent = UserModel.objects.create_user(
             username='agent@test.com', password='pass', role='agent',
-            nom='Dupont', prenom='Jean'
+            nom='Dupont', prenom='Jean', email='agent@test.com'
         )
         self.admin = UserModel.objects.create_user(
             username='admin@test.com', password='pass', role='admin',
@@ -296,7 +311,8 @@ class AdminFlowTest(TestCase):
         response = self.client.get(reverse('admin_dashboard'))
         self.assertContains(response, '3')
 
-    def test_validate_measurement(self):
+    @patch('measurements.views.send_status_email')
+    def test_validate_measurement(self, mock_email):
         m = Measurement.objects.create(
             user=self.agent, rempli_par=self.agent, type_equipement='veste',
             tour_poitrine=100, tour_taille=80, tour_hanches=90,
@@ -309,6 +325,7 @@ class AdminFlowTest(TestCase):
         self.assertRedirects(response, reverse('admin_dashboard'))
         m.refresh_from_db()
         self.assertEqual(m.status, 'valide')
+        mock_email.assert_called_once_with(m)
 
     def test_validate_notifies_tech_and_agent(self):
         m = Measurement.objects.create(
@@ -327,7 +344,8 @@ class AdminFlowTest(TestCase):
             Notification.objects.filter(user=self.agent, category='measurement').exists()
         )
 
-    def test_refuse_measurement(self):
+    @patch('measurements.views.send_status_email')
+    def test_refuse_measurement(self, mock_email):
         m = Measurement.objects.create(
             user=self.agent, rempli_par=self.agent, type_equipement='veste',
             tour_poitrine=100, tour_taille=80, tour_hanches=90,
@@ -341,6 +359,7 @@ class AdminFlowTest(TestCase):
         m.refresh_from_db()
         self.assertEqual(m.status, 'refuse')
         self.assertEqual(m.notes_admin, 'Mesures incorrectes')
+        mock_email.assert_called_once_with(m)
 
     def test_manage_users(self):
         response = self.client.get(reverse('manage_users'))
@@ -374,7 +393,8 @@ class AdminFlowTest(TestCase):
         response = self.client.get(reverse('livraison_groupee'))
         self.assertEqual(response.status_code, 200)
 
-    def test_confirmer_livraison_groupee(self):
+    @patch('measurements.views.send_status_email')
+    def test_confirmer_livraison_groupee(self, mock_email):
         m = Measurement.objects.create(
             user=self.agent, rempli_par=self.agent, type_equipement='veste',
             tour_poitrine=100, tour_taille=80, tour_hanches=90,
@@ -387,6 +407,7 @@ class AdminFlowTest(TestCase):
         self.assertRedirects(response, reverse('livraison_groupee'))
         m.refresh_from_db()
         self.assertEqual(m.status, 'livre')
+        mock_email.assert_called_once_with(m)
 
     def test_confirmer_livraison_groupee_no_selection(self):
         response = self.client.post(
@@ -421,7 +442,7 @@ class TechFlowTest(TestCase):
         self.client = Client()
         self.agent = UserModel.objects.create_user(
             username='agent@test.com', password='pass', role='agent',
-            nom='Dupont', prenom='Jean'
+            nom='Dupont', prenom='Jean', email='agent@test.com'
         )
         self.tech = UserModel.objects.create_user(
             username='tech@test.com', password='pass', role='technicien',
@@ -451,7 +472,8 @@ class TechFlowTest(TestCase):
         response = self.client.get(reverse('tech_dashboard'))
         self.assertNotContains(response, 'Veste')
 
-    def test_update_status_valide_to_en_production(self):
+    @patch('measurements.views.send_status_email')
+    def test_update_status_valide_to_en_production(self, mock_email):
         m = Measurement.objects.create(
             user=self.agent, rempli_par=self.agent, type_equipement='uniforme_ete',
             tour_poitrine=100, tour_taille=80, tour_hanches=90,
@@ -464,8 +486,10 @@ class TechFlowTest(TestCase):
         self.assertRedirects(response, reverse('tech_dashboard'))
         m.refresh_from_db()
         self.assertEqual(m.status, 'en_production')
+        mock_email.assert_called_once_with(m)
 
-    def test_update_status_en_production_to_pret(self):
+    @patch('measurements.views.send_status_email')
+    def test_update_status_en_production_to_pret(self, mock_email):
         m = Measurement.objects.create(
             user=self.agent, rempli_par=self.agent, type_equipement='uniforme_ete',
             tour_poitrine=100, tour_taille=80, tour_hanches=90,
@@ -478,8 +502,10 @@ class TechFlowTest(TestCase):
         self.assertRedirects(response, reverse('tech_dashboard'))
         m.refresh_from_db()
         self.assertEqual(m.status, 'pret')
+        mock_email.assert_called_once_with(m)
 
-    def test_update_status_pret_to_livre(self):
+    @patch('measurements.views.send_status_email')
+    def test_update_status_pret_to_livre(self, mock_email):
         m = Measurement.objects.create(
             user=self.agent, rempli_par=self.agent, type_equipement='uniforme_ete',
             tour_poitrine=100, tour_taille=80, tour_hanches=90,
@@ -492,6 +518,7 @@ class TechFlowTest(TestCase):
         self.assertRedirects(response, reverse('tech_dashboard'))
         m.refresh_from_db()
         self.assertEqual(m.status, 'livre')
+        mock_email.assert_called_once_with(m)
 
     def test_update_status_invalid_transition(self):
         m = Measurement.objects.create(
@@ -586,7 +613,8 @@ class TechFlowTest(TestCase):
         response = self.client.get(reverse('measurement_detail', args=[m.pk]))
         self.assertEqual(response.status_code, 200)
 
-    def test_confirmer_avancement_groupe_decrements_stock(self):
+    @patch('measurements.views.send_status_email')
+    def test_confirmer_avancement_groupe_decrements_stock(self, mock_email):
         StockItem.objects.create(
             name='T-shirt été', category='uniforme_ete', size='M',
             quantity=10, min_threshold=5
@@ -603,6 +631,7 @@ class TechFlowTest(TestCase):
         })
         item = StockItem.objects.first()
         self.assertEqual(item.quantity, 9)
+        mock_email.assert_called_once_with(m)
 
 
 class PermissionTest(TestCase):
