@@ -23,19 +23,17 @@ Puis ouvrir http://127.0.0.1:8000
 ## Structure
 
 ```
-adii_project/
+.
 ├── accounts/          # Utilisateurs, auth, rôles
 ├── measurements/      # Fiches de mesure, workflow
 ├── stock/             # Gestion du stock
 ├── notifications/     # Système de notifications
-├── templates/
-│   ├── base.html
-│   ├── home.html
-│   ├── auth.html
-│   ├── agent/
-│   ├── admin_panel/
-│   └── technicien/
-└── static/css/adii.css
+├── templates/         # Templates HTML par rôle
+├── static/            # CSS, JS, images
+├── settings.py        # Configuration Django
+├── urls.py            # Routage principal
+├── manage.py          # Point d'entrée CLI
+└── requirements.txt   # Dépendances
 ```
 
 ## Fonctionnalités
