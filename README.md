@@ -32,7 +32,14 @@ Ouvrir http://127.0.0.1:8000
 
 ## Configuration
 
-Voir [DEVELOPER.md](DEVELOPER.md) pour la base de donnees (PostgreSQL) et le setup complet Windows/Linux.
+**Base de donnees** : PostgreSQL sur **port 5433** (pas le 5432 par defaut).  
+Modifier le port dans `settings.py` ligne 67 si besoin :
+
+```python
+'PORT': '5433',   # changez ici si votre PostgreSQL utilise 5432
+```
+
+Pour le reste (installation PostgreSQL, creation de la DB), voir [DEVELOPER.md](DEVELOPER.md).
 
 ## Comptes de démonstration
 
