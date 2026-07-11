@@ -10,6 +10,7 @@ from django.template.loader import render_to_string
 from .models import Measurement, RetourEffet
 from .forms import MeasurementForm, AdminNoteForm, RetourEffetForm
 from notifications.utils import create_notification
+from notifications.email_utils import send_status_email
 from stock.models import StockItem, StockMovement
 
 def role_required(roles):
@@ -52,6 +53,7 @@ def create_measurement(request):
             m.user = request.user
             m.rempli_par = request.user
             m.save()
+            send_status_email(m)
             from accounts.models import User
             for admin in User.objects.filter(role='admin'):
                 create_notification(
@@ -110,6 +112,7 @@ def secretaire_create(request):
             m.user = agent
             m.rempli_par = request.user
             m.save()
+            send_status_email(m)
             for admin in User.objects.filter(role='admin'):
                 create_notification(
                     admin,
@@ -164,6 +167,7 @@ def validate_measurement(request, pk):
     if action == 'valide':
         m.status = 'valide'
         m.save()
+        send_status_email(m)
         from accounts.models import User
         for tech in User.objects.filter(role='technicien'):
             create_notification(
@@ -183,6 +187,7 @@ def validate_measurement(request, pk):
         m.status = 'refuse'
         m.notes_admin = request.POST.get('notes_admin', '')
         m.save()
+        send_status_email(m)
         create_notification(
             m.user,
             'Fiche refusée',
@@ -230,6 +235,7 @@ def confirmer_livraison_groupee(request):
         for fiche in fiches:
             fiche.status = 'livre'
             fiche.save()
+            send_status_email(fiche)
             create_notification(
                 fiche.user,
                 'Tenue livrée ✅',
@@ -294,6 +300,7 @@ def confirmer_avancement_groupe(request):
         for fiche in fiches:
             fiche.status = new_status
             fiche.save()
+            send_status_email(fiche)
             create_notification(
                 fiche.user,
                 f"Avancement mis à jour — {status_labels[new_status]}",
@@ -349,6 +356,7 @@ def update_status(request, pk):
     if new_status == allowed.get(m.status):
         m.status = new_status
         m.save()
+        send_status_email(m)
         if new_status == 'en_production':
             item = StockItem.objects.filter(category=m.type_equipement).first()
             if item and item.quantity > 0:

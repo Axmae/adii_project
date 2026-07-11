@@ -4,6 +4,7 @@ from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from .forms import LoginForm, RegisterForm, ProfileForm
 from .models import User
+from notifications.email_utils import send_welcome_email
 
 def home(request):
     return render(request, 'home.html')
@@ -34,6 +35,7 @@ def auth_view(request):
             register_form = RegisterForm(request.POST)
             if register_form.is_valid():
                 user = register_form.save()
+                send_welcome_email(user)
                 login(request, user)
                 messages.success(request, "Compte créé avec succès !")
                 return redirect('agent_dashboard')
