@@ -377,7 +377,7 @@ def tech_dashboard(request):
     ).select_related('user').order_by('-created_at')[:200]
     return render(request, 'technicien/dashboard.html', {'measurements': measurements})
 
-@role_required(['technicien'])
+@role_required(['technicien', 'admin'])
 def update_status(request, pk):
     m = get_object_or_404(Measurement.objects.select_related('user'), pk=pk)
     new_status = request.POST.get('status')
@@ -428,6 +428,8 @@ def update_status(request, pk):
                 category='measurement'
             )
         messages.success(request, f"Statut mis à jour : {m.get_status_display()}")
+    if request.user.role == 'admin':
+        return redirect('admin_dashboard')
     return redirect('tech_dashboard')
 
 # ─── RETOUR D'EFFETS (Agent) ──────────────────────────────

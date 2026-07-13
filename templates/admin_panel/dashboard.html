@@ -134,6 +134,16 @@
                     <button type="submit" class="btn btn-success btn-sm"> Valider</button>
                   </form>
                   <button onclick="openRefuse({{ m.pk }})" class="btn btn-danger btn-sm"> Refuser</button>
+                  {% elif m.status == 'en_production' %}
+                  <form method="post" action="{% url 'update_status' m.pk %}" style="display:inline">
+                    {% csrf_token %}<input type="hidden" name="status" value="pret">
+                    <button type="submit" class="btn btn-success btn-sm"> Marquer prêt</button>
+                  </form>
+                  {% elif m.status == 'pret' %}
+                  <form method="post" action="{% url 'update_status' m.pk %}" style="display:inline">
+                    {% csrf_token %}<input type="hidden" name="status" value="livre">
+                    <button type="submit" class="btn btn-accent btn-sm"> Confirmer livraison</button>
+                  </form>
                   {% endif %}
                 </div>
               </td>
