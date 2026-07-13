@@ -52,7 +52,7 @@
       {% csrf_token %}
 
       <!-- Barre d'actions sticky -->
-      <div style="background:white;border:1px solid var(--border);border-radius:12px;padding:16px 20px;margin-bottom:16px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;position:sticky;top:72px;z-index:50;box-shadow:var(--shadow-md)">
+      <div style="background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:16px 20px;margin-bottom:16px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;position:sticky;top:72px;z-index:50;box-shadow:var(--shadow-md)">
         <div style="display:flex;align-items:center;gap:12px">
           <input type="checkbox" id="select-all" style="width:18px;height:18px;cursor:pointer">
           <label for="select-all" style="font-weight:600;cursor:pointer">Tout sélectionner</label>
@@ -120,17 +120,17 @@
               {% with s=fiche.status %}
               <div style="width:22px;height:22px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:.65rem;font-weight:700;
                 {% if s != 'refuse' %}background:#d1fae5;color:#065f46{% else %}background:#fee2e2;color:#991b1b{% endif %}"></div>
-              <div style="flex:1;height:2px;{% if s in 'valide,en_production,pret,livre' %}background:#10b981{% else %}background:var(--border){% endif %}"></div>
+              <div style="flex:1;height:2px;{% if s in 'valide,en_production,pret,livre' %}background:var(--success){% else %}background:var(--border){% endif %}"></div>
               <div style="width:22px;height:22px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:.65rem;font-weight:700;
                 {% if s in 'valide,en_production,pret,livre' %}background:#d1fae5;color:#065f46{% elif s == 'refuse' %}background:#fee2e2;color:#991b1b{% else %}background:var(--border);color:var(--text-muted){% endif %}">
                 {% if s in 'valide,en_production,pret,livre' %}{% else %}2{% endif %}
               </div>
-              <div style="flex:1;height:2px;{% if s in 'en_production,pret,livre' %}background:#10b981{% else %}background:var(--border){% endif %}"></div>
+              <div style="flex:1;height:2px;{% if s in 'en_production,pret,livre' %}background:var(--success){% else %}background:var(--border){% endif %}"></div>
               <div style="width:22px;height:22px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:.65rem;font-weight:700;
                 {% if s in 'pret,livre' %}background:#d1fae5;color:#065f46{% elif s == 'en_production' %}background:#ede9fe;color:#5b21b6{% else %}background:var(--border);color:var(--text-muted){% endif %}">
                 {% if s in 'pret,livre' %}{% elif s == 'en_production' %}{% else %}3{% endif %}
               </div>
-              <div style="flex:1;height:2px;{% if s in 'pret,livre' %}background:#10b981{% else %}background:var(--border){% endif %}"></div>
+              <div style="flex:1;height:2px;{% if s in 'pret,livre' %}background:var(--success){% else %}background:var(--border){% endif %}"></div>
               <div style="width:22px;height:22px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:.65rem;font-weight:700;
                 {% if s == 'livre' %}background:#d1fae5;color:#065f46{% elif s == 'pret' %}background:#ccfbf1;color:#0f766e{% else %}background:var(--border);color:var(--text-muted){% endif %}">
                 {% if s == 'livre' %}{% elif s == 'pret' %}{% else %}4{% endif %}

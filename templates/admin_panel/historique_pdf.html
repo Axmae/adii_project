@@ -4,17 +4,17 @@
   <meta charset="UTF-8">
   <style>
     @page {
-      size: A4 landscape;
-      margin: 1.2cm 1.5cm;
+      size: A4 portrait;
+      margin: 1.5cm 1.5cm;
       @bottom-center {
         content: "ADII — page " counter(page) " / " counter(pages);
         font-size: 7pt; color: #94a3b8;
-        font-family: Helvetica, Arial, sans-serif;
+        font-family: 'Times New Roman', Times, serif;
       }
     }
-    body { font-family: Helvetica, Arial, sans-serif; font-size: 9pt; color: #1e293b; margin: 0; padding: 0; }
-    .header { margin-bottom: 14px; }
-    .header img { height: 36px; }
+    body { font-family: 'Times New Roman', Times, serif; font-size: 9pt; color: #1e293b; margin: 0; padding: 0; }
+    .header { text-align: center; margin-bottom: 14px; }
+    .header img { height: 50px; }
     .report-info {
       display: flex; justify-content: space-between;
       margin-bottom: 12px; padding-bottom: 6px;
@@ -49,7 +49,7 @@
 <body>
 
   <div class="header">
-    <img src="static/img/ADII_HEADER.svg" alt="ADII">
+    <img src="static/img/ADII_HEADER.svg" alt="ADII" style="height:50px;">
   </div>
 
   <div class="report-info">

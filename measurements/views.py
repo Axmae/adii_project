@@ -928,23 +928,28 @@ def reception_pdf(request):
         w, h = A4
 
         c.setFillColor(colors.HexColor('#1e293b'))
-        c.setFont('Helvetica-Bold', 16)
-        c.drawCentredString(w/2, h - 2*cm, 'Bon de réception')
+        c.setFont('Times-Bold', 14)
+        c.drawCentredString(w/2, h - 1.8*cm, 'ADII')
+        c.setFont('Times-Roman', 8)
+        c.drawCentredString(w/2, h - 2.2*cm, 'Administration des Douanes et Impôts Indirects')
 
-        c.setFont('Helvetica', 9)
-        c.drawCentredString(w/2, h - 2.8*cm, 'Remise d\'équipement d\'habillement')
+        c.setFont('Times-Bold', 16)
+        c.drawCentredString(w/2, h - 3*cm, 'Bon de réception')
+
+        c.setFont('Times-Roman', 9)
+        c.drawCentredString(w/2, h - 3.8*cm, 'Remise d\'équipement d\'habillement')
 
         c.setStrokeColor(colors.HexColor('#cbd5e1'))
-        c.line(2*cm, h - 3.5*cm, w - 2*cm, h - 3.5*cm)
+        c.line(2*cm, h - 4.5*cm, w - 2*cm, h - 4.5*cm)
 
-        c.setFont('Helvetica', 9)
-        c.drawString(2*cm, h - 4.2*cm, f'Date: {datetime.now().strftime("%d/%m/%Y %H:%M")}')
-        c.drawString(2*cm, h - 4.7*cm, f'Responsable: {request.user.get_full_name() or request.user.username}')
+        c.setFont('Times-Roman', 9)
+        c.drawString(2*cm, h - 5.2*cm, f'Date: {datetime.now().strftime("%d/%m/%Y %H:%M")}')
+        c.drawString(2*cm, h - 5.7*cm, f'Responsable: {request.user.get_full_name() or request.user.username}')
 
-        c.line(2*cm, h - 5.2*cm, w - 2*cm, h - 5.2*cm)
+        c.line(2*cm, h - 6.2*cm, w - 2*cm, h - 6.2*cm)
 
-        y = h - 5.8*cm
-        c.setFont('Helvetica-Bold', 9)
+        y = h - 6.8*cm
+        c.setFont('Times-Bold', 9)
         c.drawString(2*cm, y, 'Agent')
         c.drawString(6*cm, y, 'Matricule')
         c.drawString(10*cm, y, 'Équipement')
@@ -953,19 +958,19 @@ def reception_pdf(request):
         c.line(2*cm, y, w - 2*cm, y)
         y -= 0.3*cm
 
-        c.setFont('Helvetica', 9)
+        c.setFont('Times-Roman', 9)
         for f in fiches:
             if y < 3*cm:
                 c.showPage()
                 y = h - 2*cm
-                c.setFont('Helvetica-Bold', 9)
+                c.setFont('Times-Bold', 9)
                 c.drawString(2*cm, y, 'Agent')
                 c.drawString(6*cm, y, 'Matricule')
                 c.drawString(10*cm, y, 'Équipement')
                 y -= 0.5*cm
                 c.line(2*cm, y, w - 2*cm, y)
                 y -= 0.3*cm
-                c.setFont('Helvetica', 9)
+                c.setFont('Times-Roman', 9)
             c.drawString(2*cm, y, f.user.get_full_name())
             c.drawString(6*cm, y, f.user.matricule or '—')
             c.drawString(10*cm, y, f.get_type_equipement_display())
@@ -977,3 +982,24 @@ def reception_pdf(request):
         response = HttpResponse(buffer, content_type='application/pdf')
         response['Content-Disposition'] = 'attachment; filename="bon_reception.pdf"'
         return response
+
+
+@login_required
+@role_required(['admin'])
+def liste_bons_reception(request):
+    from django.db.models import Count
+
+    livrees = Measurement.objects.filter(
+        status='livre'
+    ).select_related('user', 'rempli_par').order_by('-updated_at')
+
+    group_ids = request.GET.get('ids', '')
+    fiches_selection = None
+    if group_ids:
+        pk_list = [int(x) for x in group_ids.split(',') if x.isdigit()]
+        fiches_selection = livrees.filter(pk__in=pk_list)
+
+    return render(request, 'admin_panel/bons_reception.html', {
+        'livrees': livrees,
+        'fiches_selection': fiches_selection,
+    })

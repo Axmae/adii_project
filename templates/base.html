@@ -15,8 +15,8 @@
 {% if user.is_authenticated %}
 <nav class="navbar">
   <a class="navbar-brand" href="/">
-    <span class="logo-badge">ADII</span>
-    <span>Gestion d'habillement</span>
+    <img src="{% static 'img/ADII_HEADER_WHITE.svg' %}" alt="ADII"
+         style="height:50px;width:auto;">
   </a>
   <div class="navbar-nav">
 
@@ -34,6 +34,7 @@
       <a class="nav-link" href="{% url 'admin_dashboard' %}">Tableau de bord</a>
       <a class="nav-link" href="{% url 'avancement_groupe' %}">Avancement groupe</a>
       <a class="nav-link" href="{% url 'livraison_groupee' %}">Livraisons</a>
+      <a class="nav-link" href="{% url 'liste_bons_reception' %}">Bons</a>
       <a class="nav-link" href="{% url 'historique_agents' %}">Historique</a>
       <a class="nav-link" href="{% url 'manage_users' %}">Utilisateurs</a>
       <a class="nav-link" href="{% url 'stock_list' %}">Stock</a>

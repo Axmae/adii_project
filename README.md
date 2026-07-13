@@ -7,6 +7,11 @@
     <img src="https://github.com/Axmae/adii_project/blob/main/ADII_HEADER_README.svg" alt="ADII Header">
   </p>
 </a>
+<a href="#">
+  <p align="center">
+    <img src="ADII_HEADER_README.svg" alt="ADII Header">
+  </p>
+</a>
 <h2 align="center">ADII — Gestion d'habillement</h2>
 <p align="center">Application web Django pour la gestion des fiches de mesure et du stock d'habillement (Administration des Douanes et Impôts Indirects).</p>
 <br/>

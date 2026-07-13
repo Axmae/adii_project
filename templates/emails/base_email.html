@@ -1,4 +1,5 @@
 <!DOCTYPE html>
+{% load static %}
 <html lang="fr">
 <head>
   <meta charset="UTF-8">
@@ -7,6 +8,7 @@
     body { margin:0; padding:0; background:#F1F5F9; font-family:'Segoe UI',Arial,sans-serif; }
     .wrapper { max-width:600px; margin:0 auto; padding:24px 16px; }
     .header { background:#1A3A6B; border-radius:12px 12px 0 0; padding:24px; text-align:center; }
+    .header img { max-width:100%; height:auto; }
     .header h1 { color:#C8A84B; margin:0; font-size:22px; font-weight:700; letter-spacing:1px; }
     .header p { color:#94A3B8; margin:4px 0 0; font-size:12px; }
     .body { background:#FFFFFF; padding:32px; border-radius:0 0 12px 12px; }
@@ -19,8 +21,7 @@
 <body>
   <div class="wrapper">
     <div class="header">
-      <h1>ADII</h1>
-      <p>Administration des Douanes et Impôts Indirects</p>
+      <img src="{% static 'img/ADII_FULL.svg' %}" alt="ADII — Administration des Douanes et Impôts Indirects" style="max-width:100%;height:auto;">
     </div>
     <div class="body">
       {% block email_content %}{% endblock %}
