@@ -37,7 +37,7 @@ body{font-family:'Inter',system-ui,sans-serif;background:var(--bg);color:var(--t
 .btn:focus-visible,.nav-link:focus-visible,.form-input:focus-visible{outline-offset:0}
 
 /* ── Navbar ── */
-.navbar{background:var(--primary);padding:0 24px;display:flex;align-items:center;height:64px;gap:16px;box-shadow:var(--shadow);position:sticky;top:0;z-index:100}
+.navbar{background:var(--primary);padding:0 24px;display:flex;align-items:center;height:64px;gap:16px;box-shadow:var(--shadow);position:sticky;top:0;z-index:100;contain:layout paint}
 .navbar-brand{display:flex;align-items:center;gap:10px;color:oklch(96% 0.01 265);text-decoration:none;font-weight:600;font-size:1.05rem}
 .logo-badge{background:var(--accent);color:var(--primary-dark);padding:4px 10px;border-radius:6px;font-size:.85rem;font-weight:700}
 .navbar-nav{display:flex;align-items:center;gap:2px;margin-left:auto}
@@ -105,6 +105,10 @@ textarea.form-input{resize:vertical;min-height:80px}
 .btn:disabled,.btn[disabled]{opacity:.45;cursor:not-allowed;pointer-events:none;filter:grayscale(.3)}
 .btn-sm{padding:5px 12px;font-size:.8rem}.btn-lg{padding:13px 28px;font-size:1rem}.btn-block{width:100%;justify-content:center}
 
+/* ── Images ── */
+img{max-width:100%;height:auto}
+.schema-img{aspect-ratio:680/780;width:100%;max-width:280px;height:auto}
+
 /* ── Hero ── */
 .hero{background:var(--surface);border-bottom:1px solid var(--border);color:var(--text);text-align:center;padding:72px 24px 56px}
 .hero-logo{font-size:2.75rem;font-weight:700;letter-spacing:-1px;margin-bottom:8px}
@@ -114,7 +118,7 @@ textarea.form-input{resize:vertical;min-height:80px}
 .hero-desc{font-size:1rem;opacity:.8;max-width:520px;margin:0 auto}
 
 /* ── Role cards ── */
-.role-cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:20px;padding:48px 24px;max-width:1000px;margin:0 auto}
+.role-cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:20px;padding:48px 24px;max-width:1000px;margin:0 auto;content-visibility:auto;contain-intrinsic-size:400px}
 .role-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:28px;box-shadow:var(--shadow);display:flex;flex-direction:column;gap:12px;text-decoration:none;color:var(--text);transition:transform .2s,box-shadow .2s,border-color .2s}
 .role-card:hover{transform:translateY(-2px);box-shadow:var(--shadow-md);border-color:var(--primary-light)}
 .role-card-icon{width:48px;height:48px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:1.5rem}

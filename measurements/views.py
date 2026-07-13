@@ -28,8 +28,8 @@ def role_required(roles):
 # ─── AGENT ───────────────────────────────────────────────
 @login_required
 def agent_dashboard(request):
-    measurements = Measurement.objects.filter(user=request.user)
-    retours = RetourEffet.objects.filter(agent=request.user)
+    measurements = Measurement.objects.filter(user=request.user).order_by('-created_at')[:50]
+    retours = RetourEffet.objects.filter(agent=request.user).order_by('-created_at')[:20]
     return render(request, 'agent/dashboard.html', {
         'measurements': measurements,
         'retours': retours,
@@ -87,7 +87,7 @@ def edit_measurement(request, pk):
 # ─── SECRÉTAIRE ──────────────────────────────────────────
 @role_required(['secretaire', 'admin'])
 def secretaire_dashboard(request):
-    measurements = Measurement.objects.select_related('user', 'rempli_par').order_by('-created_at')
+    measurements = Measurement.objects.select_related('user', 'rempli_par').order_by('-created_at')[:200]
     return render(request, 'secretaire/dashboard.html', {
         'measurements': measurements,
     })
@@ -162,7 +162,7 @@ def admin_dashboard(request):
 
 @role_required(['admin'])
 def validate_measurement(request, pk):
-    m = get_object_or_404(Measurement, pk=pk)
+    m = get_object_or_404(Measurement.objects.select_related('user'), pk=pk)
     action = request.POST.get('action')
     if action == 'valide':
         m.status = 'valide'
@@ -232,18 +232,23 @@ def confirmer_livraison_groupee(request):
         if not ids:
             messages.warning(request, "Aucune fiche sélectionnée.")
             return redirect('livraison_groupee')
-        fiches = Measurement.objects.filter(pk__in=ids, status='pret').select_related('user')
-        count = fiches.count()
-        for fiche in fiches:
-            fiche.status = 'livre'
-            fiche.save()
-            send_status_email(fiche)
-            create_notification(
-                fiche.user,
-                'Tenue livrée',
-                f"Votre tenue ({fiche.get_type_equipement_display()}) vous a été remise officiellement.",
-                category='measurement'
-            )
+        fiches = list(Measurement.objects.filter(pk__in=ids, status='pret').select_related('user'))
+        count = len(fiches)
+        if count:
+            from notifications.models import Notification
+            for fiche in fiches:
+                fiche.status = 'livre'
+            Measurement.objects.bulk_update(fiches, ['status'])
+            notifications = []
+            for fiche in fiches:
+                send_status_email(fiche)
+                notifications.append(Notification(
+                    user=fiche.user,
+                    title='Tenue livrée',
+                    message=f"Votre tenue ({fiche.get_type_equipement_display()}) vous a été remise officiellement.",
+                    category='measurement'
+                ))
+            Notification.objects.bulk_create(notifications)
         messages.success(request, f"{count} tenue(s) marquée(s) comme livrée(s).")
         request.session['last_confirmed_ids'] = ids
         return redirect('livraison_groupee')
@@ -282,8 +287,11 @@ def confirmer_avancement_groupe(request):
         if new_status not in valid_statuses:
             messages.error(request, "Statut invalide.")
             return redirect('avancement_groupe')
-        fiches = Measurement.objects.filter(pk__in=ids).select_related('user')
-        count  = fiches.count()
+        fiches = list(Measurement.objects.filter(pk__in=ids).select_related('user'))
+        count = len(fiches)
+        if not count:
+            messages.warning(request, "Aucune fiche trouvée.")
+            return redirect('avancement_groupe')
         status_labels = {
             'en_attente':    'En attente',
             'valide':        'Validé',
@@ -300,6 +308,10 @@ def confirmer_avancement_groupe(request):
             'refuse':        "Votre demande a été refusée.",
             'en_attente':    "Votre fiche a été remise en attente.",
         }
+
+        from accounts.models import User
+        from notifications.models import Notification
+
         # Prefetch stock items for en_production case
         categories = set()
         for fiche in fiches:
@@ -310,17 +322,22 @@ def confirmer_avancement_groupe(request):
             for si in StockItem.objects.filter(category__in=categories):
                 stock_map[si.category] = si
 
-        from accounts.models import User
+        # Bulk update statuses
         for fiche in fiches:
             fiche.status = new_status
-            fiche.save()
+        Measurement.objects.bulk_update(fiches, ['status'])
+
+        notifications = []
+        alerted_stock = set()
+
+        for fiche in fiches:
             send_status_email(fiche)
-            create_notification(
-                fiche.user,
-                f"Avancement mis a jour — {status_labels[new_status]}",
-                notif_msgs.get(new_status, "Votre dossier a été mis à jour."),
+            notifications.append(Notification(
+                user=fiche.user,
+                title=f"Avancement mis a jour — {status_labels[new_status]}",
+                message=notif_msgs.get(new_status, "Votre dossier a été mis à jour."),
                 category='measurement'
-            )
+            ))
             if new_status == 'en_production':
                 item = stock_map.get(fiche.type_equipement)
                 if item and item.quantity > 0:
@@ -337,14 +354,17 @@ def confirmer_avancement_groupe(request):
                         note=f"Mise en production groupee — fiche #{fiche.pk} ({fiche.user.get_full_name()})",
                         created_by=request.user,
                     )
-                    if item.quantity < item.min_threshold:
+                    if item.quantity < item.min_threshold and item.pk not in alerted_stock:
+                        alerted_stock.add(item.pk)
                         for admin in User.objects.filter(role='admin'):
-                            create_notification(
-                                admin,
-                                'Stock bas',
-                                f"{item.name} ({item.size}) : {item.quantity} unites restantes.",
+                            notifications.append(Notification(
+                                user=admin,
+                                title='Stock bas',
+                                message=f"{item.name} ({item.size}) : {item.quantity} unites restantes.",
                                 category='stock'
-                            )
+                            ))
+
+        Notification.objects.bulk_create(notifications)
         messages.success(request, f"{count} fiche(s) mise(s) à jour → {status_labels[new_status]}.")
         return redirect('avancement_groupe')
     return redirect('avancement_groupe')
@@ -354,12 +374,12 @@ def confirmer_avancement_groupe(request):
 def tech_dashboard(request):
     measurements = Measurement.objects.filter(
         status__in=['valide', 'en_production', 'pret']
-    ).select_related('user')
+    ).select_related('user').order_by('-created_at')[:200]
     return render(request, 'technicien/dashboard.html', {'measurements': measurements})
 
 @role_required(['technicien'])
 def update_status(request, pk):
-    m = get_object_or_404(Measurement, pk=pk)
+    m = get_object_or_404(Measurement.objects.select_related('user'), pk=pk)
     new_status = request.POST.get('status')
     allowed = {
         'valide':        'en_production',
@@ -423,13 +443,12 @@ def enregistrer_retour(request):
             r.created_by = request.user
             r.save()
             from accounts.models import User
-            for admin in User.objects.filter(role='admin'):
-                create_notification(
-                    admin,
-                    'Retour d\'effet déclaré',
-                    f"{request.user.get_full_name()} a retourné {r.quantite} x {r.get_type_equipement_display()} pour {r.get_motif_display()}.",
-                    category='stock'
-                )
+            from notifications.models import Notification
+            admins = User.objects.filter(role='admin')
+            msg = f"{request.user.get_full_name()} a retourné {r.quantite} x {r.get_type_equipement_display()} pour {r.get_motif_display()}."
+            notifications = [Notification(user=a, title='Retour d\'effet déclaré', message=msg, category='stock') for a in admins]
+            if notifications:
+                Notification.objects.bulk_create(notifications)
             messages.success(request, "Retour enregistré avec succès.")
             return redirect('agent_dashboard')
     else:
@@ -454,11 +473,15 @@ def historique_agents(request):
     m_qs = Measurement.objects.select_related('rempli_par')
     r_qs = RetourEffet.objects.all()
     if date_debut:
-        m_qs = m_qs.filter(created_at__date__gte=date_debut)
-        r_qs = r_qs.filter(created_at__date__gte=date_debut)
+        from datetime import datetime, time
+        dt = datetime.combine(datetime.strptime(date_debut, '%Y-%m-%d').date(), time.min)
+        m_qs = m_qs.filter(created_at__gte=dt)
+        r_qs = r_qs.filter(created_at__gte=dt)
     if date_fin:
-        m_qs = m_qs.filter(created_at__date__lte=date_fin)
-        r_qs = r_qs.filter(created_at__date__lte=date_fin)
+        from datetime import datetime, time
+        dt = datetime.combine(datetime.strptime(date_fin, '%Y-%m-%d').date(), time.max)
+        m_qs = m_qs.filter(created_at__lte=dt)
+        r_qs = r_qs.filter(created_at__lte=dt)
 
     agents = agents.prefetch_related(
         Prefetch('measurements', queryset=m_qs),
@@ -467,10 +490,9 @@ def historique_agents(request):
 
     historiques = [{'agent': a, 'measurements': a.measurements.all(), 'retours': a.retours.all()} for a in agents]
 
-    all_agents = User.objects.filter(role='agent').order_by('nom')
     return render(request, 'admin_panel/historique.html', {
         'historiques': historiques,
-        'agents': all_agents,
+        'agents': agents,
         'agent_filter': agent_filter,
         'date_debut': date_debut,
         'date_fin': date_fin,
@@ -971,7 +993,7 @@ def liste_bons_reception(request):
 
     livrees = Measurement.objects.filter(
         status='livre'
-    ).select_related('user', 'rempli_par').order_by('-updated_at')
+    ).select_related('user', 'rempli_par').order_by('-updated_at')[:200]
 
     group_ids = request.GET.get('ids', '')
     fiches_selection = None
