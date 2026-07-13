@@ -514,41 +514,21 @@ def export_historique_excel(request):
     left_align = Alignment(vertical="center")
 
     # ── Header block (rows 1-3) ──
-    # Row 1: colored background bar
-    for col in range(1, 12):
-        cell = ws.cell(row=1, column=col)
-        cell.fill = navy_fill
-        cell.border = thin_border
-    ws.merge_cells('A1:K1')
-    title_cell = ws.cell(row=1, column=1)
-    title_cell.value = "ADII — Administration des Douanes et Impôts Indirects"
-    title_cell.font = white_font_lg
-    title_cell.alignment = Alignment(horizontal="left", vertical="center")
-    # Gold accent bar
-    ws.row_dimensions[1].height = 32
+    # Banner image (ADII header)
+    from openpyxl.drawing.image import Image
+    from pathlib import Path
+    banner_path = Path(__file__).resolve().parent.parent / 'static' / 'img' / 'adii_header_white.png'
+    if banner_path.exists():
+        ws.row_dimensions[1].height = 80
+        img = Image(str(banner_path))
+        img.anchor = 'A1'
+        img.width = 290
+        img.height = 80
+        ws.add_image(img)
 
-    # Row 2: subtitle
-    for col in range(1, 12):
-        cell = ws.cell(row=2, column=col)
-        cell.fill = navy_fill
-        cell.border = thin_border
-    ws.merge_cells('A2:K2')
-    sub_cell = ws.cell(row=2, column=1)
-    sub_cell.value = "GESTION D'HABILLEMENT — Rapport historique par agent"
-    sub_cell.font = white_font_sm
-    sub_cell.alignment = Alignment(horizontal="left", vertical="center")
-    ws.row_dimensions[2].height = 18
-
-    # Row 3: gold separator
-    for col in range(1, 12):
-        cell = ws.cell(row=3, column=col)
-        cell.fill = gold_fill
-        cell.border = thin_border
-    ws.row_dimensions[3].height = 4
-
-    # Row 4: report info
-    ws.merge_cells('A4:K4')
-    info_cell = ws.cell(row=4, column=1)
+    # Row 2: report info
+    ws.merge_cells('A3:K3')
+    info_cell = ws.cell(row=3, column=1)
     now_str = datetime.now().strftime('%d/%m/%Y %H:%M')
     agent_filter_str = request.GET.get('agent', '')
     date_debut = request.GET.get('date_debut', '')
@@ -563,13 +543,13 @@ def export_historique_excel(request):
         info_cell.value += f" — Période : {date_debut or '...'} au {date_fin or '...'}"
     info_cell.font = subtitle_font
     info_cell.alignment = Alignment(horizontal="left", vertical="center")
-    ws.row_dimensions[4].height = 22
+    ws.row_dimensions[3].height = 22
 
-    # Row 5: empty spacer
-    ws.row_dimensions[5].height = 6
+    # Row 4: empty spacer
+    ws.row_dimensions[4].height = 6
 
-    # ── Data header row (row 6) ──
-    data_start_row = 6
+    # ── Data header row (row 5) ──
+    data_start_row = 5
     demande_headers = ["Agent", "Matricule", "Service",
                        "Date demande", "Type équipement", "Statut"]
     retour_headers = ["Date retour", "Type équipement", "Quantité", "Motif retour", "Notes"]
