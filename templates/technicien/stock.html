@@ -76,14 +76,14 @@
                   <a href="{% url 'stock_movement' item.pk %}" class="btn btn-primary btn-sm">
                      Mouvement
                   </a>
-                  <a href="{% url 'stock_edit' item.pk %}" class="btn btn-outline btn-sm"></a>
+                  <a href="{% url 'stock_edit' item.pk %}" class="btn btn-outline btn-sm"> Modifier</a>
                 </div>
               </td>
             </tr>
             {% endwith %}
             {% empty %}
             <tr><td colspan="7">
-              <div class="empty-state"><div class="empty-icon"></div><p>Aucun article.</p></div>
+              <div class="empty-state"><p>Aucun article.</p></div>
             </td></tr>
             {% endfor %}
           </tbody>

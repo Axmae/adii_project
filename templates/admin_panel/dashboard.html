@@ -13,7 +13,7 @@
       <div class="stat-card"><div class="stat-value">{{ stats.total }}</div><div class="stat-label">Total dossiers</div></div>
       <div class="stat-card amber"><div class="stat-value">{{ stats.en_attente }}</div><div class="stat-label">En attente</div></div>
       <div class="stat-card blue"><div class="stat-value">{{ stats.en_production }}</div><div class="stat-label">En production</div></div>
-      <div class="stat-card" style="border-color:var(--teal)"><div class="stat-value">{{ stats.pret }}</div><div class="stat-label">Prêts</div></div>
+      <div class="stat-card teal"><div class="stat-value">{{ stats.pret }}</div><div class="stat-label">Prêts</div></div>
       <div class="stat-card green"><div class="stat-value">{{ stats.livre }}</div><div class="stat-label">Livrés</div></div>
       <div class="stat-card purple"><div class="stat-value">{{ stats.agents }}</div><div class="stat-label">Agents</div></div>
     </div>
@@ -148,9 +148,9 @@
 </div>
 
 <!-- Modal refus -->
-<div id="refuse-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:500;align-items:center;justify-content:center">
-  <div style="background:white;border-radius:var(--radius);padding:28px;max-width:440px;width:90%;box-shadow:var(--shadow-lg)">
-    <h3 style="margin-bottom:12px">Refuser la demande</h3>
+<div id="refuse-modal" class="modal-overlay" aria-hidden="true" role="dialog" aria-labelledby="refuse-title">
+  <div class="modal">
+    <h3 id="refuse-title" style="margin-bottom:12px">Refuser la demande</h3>
     <form id="refuse-form" method="post">
       {% csrf_token %}
       <input type="hidden" name="action" value="refuse">
@@ -160,7 +160,7 @@
       </div>
       <div style="display:flex;gap:10px">
         <button type="submit" class="btn btn-danger">Confirmer le refus</button>
-        <button type="button" onclick="closeRefuse()" class="btn btn-outline">Annuler</button>
+        <button type="button" onclick="closeModal('refuse-modal')" class="btn btn-outline">Annuler</button>
       </div>
     </form>
   </div>
@@ -171,10 +171,7 @@
 <script>
 function openRefuse(pk){
   document.getElementById('refuse-form').action='/admin-dashboard/valider/'+pk+'/';
-  document.getElementById('refuse-modal').style.display='flex';
-}
-function closeRefuse(){
-  document.getElementById('refuse-modal').style.display='none';
+  openModal('refuse-modal');
 }
 </script>
 {% endblock %}

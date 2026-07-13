@@ -240,11 +240,11 @@ def confirmer_livraison_groupee(request):
             send_status_email(fiche)
             create_notification(
                 fiche.user,
-                'Tenue livree',
-                f"Votre tenue ({fiche.get_type_equipement_display()}) vous a ete remise officiellement.",
+                'Tenue livrée',
+                f"Votre tenue ({fiche.get_type_equipement_display()}) vous a été remise officiellement.",
                 category='measurement'
             )
-        messages.success(request, f"{count} tenue(s) marquee(s) comme livree(s).")
+        messages.success(request, f"{count} tenue(s) marquée(s) comme livrée(s).")
         request.session['last_confirmed_ids'] = ids
         return redirect('livraison_groupee')
     return redirect('livraison_groupee')
@@ -286,19 +286,19 @@ def confirmer_avancement_groupe(request):
         count  = fiches.count()
         status_labels = {
             'en_attente':    'En attente',
-            'valide':        'Valide',
+            'valide':        'Validé',
             'en_production': 'En production',
-            'pret':          'Pret',
-            'livre':         'Livre',
-            'refuse':        'Refuse',
+            'pret':          'Prêt',
+            'livre':         'Livré',
+            'refuse':        'Refusé',
         }
         notif_msgs = {
-            'valide':        "Votre fiche a ete validee par le responsable.",
+            'valide':        "Votre fiche a été validée par le responsable.",
             'en_production': "Votre tenue est en cours de fabrication.",
-            'pret':          "Votre tenue est prete ! Venez la recuperer.",
-            'livre':         "Votre tenue vous a ete remise officiellement.",
-            'refuse':        "Votre demande a ete refusee.",
-            'en_attente':    "Votre fiche a ete remise en attente.",
+            'pret':          "Votre tenue est prête ! Venez la récupérer.",
+            'livre':         "Votre tenue vous a été remise officiellement.",
+            'refuse':        "Votre demande a été refusée.",
+            'en_attente':    "Votre fiche a été remise en attente.",
         }
         # Prefetch stock items for en_production case
         categories = set()
@@ -318,7 +318,7 @@ def confirmer_avancement_groupe(request):
             create_notification(
                 fiche.user,
                 f"Avancement mis a jour — {status_labels[new_status]}",
-                notif_msgs.get(new_status, "Votre dossier a ete mis a jour."),
+                notif_msgs.get(new_status, "Votre dossier a été mis à jour."),
                 category='measurement'
             )
             if new_status == 'en_production':
@@ -929,10 +929,10 @@ def reception_pdf(request):
 
         c.setFillColor(colors.HexColor('#1e293b'))
         c.setFont('Helvetica-Bold', 16)
-        c.drawCentredString(w/2, h - 2*cm, 'Bon de reception')
+        c.drawCentredString(w/2, h - 2*cm, 'Bon de réception')
 
         c.setFont('Helvetica', 9)
-        c.drawCentredString(w/2, h - 2.8*cm, 'Remise d\'equipement d\'habillement')
+        c.drawCentredString(w/2, h - 2.8*cm, 'Remise d\'équipement d\'habillement')
 
         c.setStrokeColor(colors.HexColor('#cbd5e1'))
         c.line(2*cm, h - 3.5*cm, w - 2*cm, h - 3.5*cm)
@@ -947,7 +947,7 @@ def reception_pdf(request):
         c.setFont('Helvetica-Bold', 9)
         c.drawString(2*cm, y, 'Agent')
         c.drawString(6*cm, y, 'Matricule')
-        c.drawString(10*cm, y, 'Equipement')
+        c.drawString(10*cm, y, 'Équipement')
         y -= 0.5*cm
         c.setStrokeColor(colors.HexColor('#e2e8f0'))
         c.line(2*cm, y, w - 2*cm, y)
@@ -961,7 +961,7 @@ def reception_pdf(request):
                 c.setFont('Helvetica-Bold', 9)
                 c.drawString(2*cm, y, 'Agent')
                 c.drawString(6*cm, y, 'Matricule')
-                c.drawString(10*cm, y, 'Equipement')
+                c.drawString(10*cm, y, 'Équipement')
                 y -= 0.5*cm
                 c.line(2*cm, y, w - 2*cm, y)
                 y -= 0.3*cm

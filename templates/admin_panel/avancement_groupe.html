@@ -42,7 +42,6 @@
     {% if not fiches %}
     <div class="card">
       <div class="empty-state">
-        <div class="empty-icon"></div>
         <h3>Aucune fiche active</h3>
         <p>Tous les dossiers sont traités ou aucun ne correspond aux filtres.</p>
       </div>
@@ -58,6 +57,7 @@
           <input type="checkbox" id="select-all" style="width:18px;height:18px;cursor:pointer">
           <label for="select-all" style="font-weight:600;cursor:pointer">Tout sélectionner</label>
           <span id="count-label" style="color:var(--text-muted);font-size:.875rem">(0 sélectionné)</span>
+
         </div>
         <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
           <label style="font-size:.875rem;font-weight:600">Nouveau statut :</label>
@@ -79,7 +79,7 @@
       <!-- Liste fiches -->
       <div style="display:flex;flex-direction:column;gap:10px">
         {% for fiche in fiches %}
-        <label style="display:flex;align-items:center;gap:16px;background:white;border:1.5px solid var(--border);border-radius:12px;padding:16px 20px;cursor:pointer;transition:all .15s"
+        <label style="display:flex;align-items:center;gap:16px;padding:16px 20px;cursor:pointer"
                class="fiche-row">
           <input type="checkbox" name="fiche_ids" value="{{ fiche.pk }}"
                  class="fiche-check" style="width:20px;height:20px;cursor:pointer;flex-shrink:0">
@@ -176,8 +176,7 @@ function updateUI() {
 
 checkboxes.forEach((cb, i) => {
   cb.addEventListener('change', () => {
-    rows[i].style.borderColor = cb.checked ? 'var(--primary)' : 'var(--border)';
-    rows[i].style.background  = cb.checked ? '#eef4ff' : 'white';
+    rows[i].classList.toggle('selected', cb.checked);
     updateUI();
   });
 });
@@ -185,8 +184,7 @@ checkboxes.forEach((cb, i) => {
 selectAll.addEventListener('change', () => {
   checkboxes.forEach((cb, i) => {
     cb.checked = selectAll.checked;
-    rows[i].style.borderColor = cb.checked ? 'var(--primary)' : 'var(--border)';
-    rows[i].style.background  = cb.checked ? '#eef4ff' : 'white';
+    rows[i].classList.toggle('selected', cb.checked);
   });
   updateUI();
 });

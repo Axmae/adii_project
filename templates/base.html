@@ -46,7 +46,7 @@
     <div class="nav-divider"></div>
 
     <div class="dropdown notif-btn">
-      <button class="nav-link" data-toggle="notif" style="background:none;border:none;cursor:pointer">
+      <button class="nav-link" data-toggle="notif" aria-expanded="false" style="background:none;border:none;cursor:pointer">
         Notif.
         {% if unread_count > 0 %}<span class="notif-badge">{{ unread_count }}</span>{% endif %}
       </button>
@@ -75,7 +75,7 @@
 
     <div class="nav-divider"></div>
     <a class="nav-link" href="{% url 'profile' %}">{{ user.get_full_name|default:user.username }}</a>
-    <a class="nav-link" href="{% url 'logout' %}">Deconnexion</a>
+    <a class="nav-link" href="{% url 'logout' %}">Déconnexion</a>
   </div>
 </nav>
 {% endif %}
