@@ -1,0 +1,85 @@
+{% extends 'base.html' %}
+{% block title %}Retours d'effets — ADII{% endblock %}
+{% block content %}
+<div class="container">
+  <div class="page-header">
+    <a href="{% url 'admin_dashboard' %}" style="color:var(--text-muted);text-decoration:none;font-size:.875rem">← Tableau de bord</a>
+    <h1 class="page-title" style="margin-top:8px">Retours d'effets</h1>
+    <p class="page-subtitle">Consultez les retours d'équipement déclarés par les agents.</p>
+  </div>
+  <div class="main-content">
+
+    <div class="card" style="margin-bottom:20px">
+      <form method="get" style="display:flex;gap:12px;flex-wrap:wrap;align-items:flex-end">
+        <div class="form-group" style="margin-bottom:0;flex:1;min-width:160px">
+          <label class="form-label">Agent</label>
+          <select name="agent" class="form-input">
+            <option value="">Tous les agents</option>
+            {% for a in agents %}
+            <option value="{{ a.pk }}" {% if agent_filter == a.pk|stringformat:'s' %}selected{% endif %}>{{ a.get_full_name }} ({{ a.matricule|default:'-' }})</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div class="form-group" style="margin-bottom:0;flex:1;min-width:140px">
+          <label class="form-label">Motif</label>
+          <select name="motif" class="form-input">
+            <option value="">Tous les motifs</option>
+            <option value="destruction" {% if motif_filter == 'destruction' %}selected{% endif %}>Destruction</option>
+            <option value="perte" {% if motif_filter == 'perte' %}selected{% endif %}>Perte</option>
+            <option value="usure" {% if motif_filter == 'usure' %}selected{% endif %}>Usure normale</option>
+            <option value="autre" {% if motif_filter == 'autre' %}selected{% endif %}>Autre</option>
+          </select>
+        </div>
+        <div class="form-group" style="margin-bottom:0;flex:1;min-width:130px">
+          <label class="form-label">Date début</label>
+          <input type="date" name="date_debut" class="form-input" value="{{ date_debut }}">
+        </div>
+        <div class="form-group" style="margin-bottom:0;flex:1;min-width:130px">
+          <label class="form-label">Date fin</label>
+          <input type="date" name="date_fin" class="form-input" value="{{ date_fin }}">
+        </div>
+        <button type="submit" class="btn btn-primary">Filtrer</button>
+        <a href="{% url 'liste_retours' %}" class="btn btn-outline">Réinitialiser</a>
+      </form>
+    </div>
+
+    <div class="card" style="padding:0">
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Date</th>
+              <th>Agent</th>
+              <th>Matricule</th>
+              <th>Équipement</th>
+              <th>Quantité</th>
+              <th>Motif</th>
+              <th>Notes</th>
+              <th>Déclaré par</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for r in retours %}
+            <tr>
+              <td style="color:var(--text-muted);white-space:nowrap">{{ r.created_at|date:"d/m/Y H:i" }}</td>
+              <td><strong>{{ r.agent.get_full_name }}</strong></td>
+              <td style="color:var(--text-muted)">{{ r.agent.matricule|default:'—' }}</td>
+              <td>{{ r.get_type_equipement_display }}</td>
+              <td><strong>{{ r.quantite }}</strong></td>
+              <td><span class="badge badge-red">{{ r.get_motif_display }}</span></td>
+              <td style="color:var(--text-muted);max-width:200px">{{ r.notes|default:'—' }}</td>
+              <td style="color:var(--text-muted)">{{ r.created_by.get_full_name|default:r.created_by.username }}</td>
+            </tr>
+            {% empty %}
+            <tr>
+              <td colspan="8" style="text-align:center;padding:24px;color:var(--text-muted)">Aucun retour enregistré.</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+  </div>
+</div>
+{% endblock %}

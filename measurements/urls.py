@@ -15,6 +15,7 @@ urlpatterns = [
     path('admin-dashboard/livraison-groupee/', views.livraison_groupee, name='livraison_groupee'),
     path('admin-dashboard/livraison-groupee/confirmer/', views.confirmer_livraison_groupee, name='confirmer_livraison_groupee'),
     path('admin-dashboard/livraison-groupee/reception/', views.reception_pdf, name='reception_pdf'),
+    path('admin-dashboard/retours/', views.liste_retours, name='liste_retours'),
     path('admin-dashboard/bons-reception/', views.liste_bons_reception, name='liste_bons_reception'),
     path('admin-dashboard/avancement-groupe/', views.avancement_groupe, name='avancement_groupe'),
     path('admin-dashboard/avancement-groupe/confirmer/', views.confirmer_avancement_groupe, name='confirmer_avancement_groupe'),

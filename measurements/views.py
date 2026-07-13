@@ -505,41 +505,32 @@ def export_historique_excel(request):
     from accounts.models import User
     from datetime import datetime
     import openpyxl
-    from openpyxl.styles import Font, PatternFill, Alignment, Border, Side, NamedStyle
+    from openpyxl.styles import Font, PatternFill, Alignment, Border, Side
     from openpyxl.utils import get_column_letter
+    from django.db.models import Prefetch
 
     wb = openpyxl.Workbook()
     ws = wb.active
     ws.title = "Historique par agent"
 
-    # ── Colors ──
-    navy_fill = PatternFill(start_color="1A3A6B", end_color="1A3A6B", fill_type="solid")
-    navy_dark_fill = PatternFill(start_color="0F2444", end_color="0F2444", fill_type="solid")
-    gold_fill = PatternFill(start_color="C8A84B", end_color="C8A84B", fill_type="solid")
-    light_gray_fill = PatternFill(start_color="F8FAFC", end_color="F8FAFC", fill_type="solid")
-    header_demande_fill = PatternFill(start_color="1A3A6B", end_color="1A3A6B", fill_type="solid")
-    header_retour_fill = PatternFill(start_color="991B1B", end_color="991B1B", fill_type="solid")
+    hdr_fill = PatternFill(start_color="1A3A6B", end_color="1A3A6B", fill_type="solid")
+    sub_fill = PatternFill(start_color="F1F5F9", end_color="F1F5F9", fill_type="solid")
     white_font = Font(bold=True, color="FFFFFF", size=9)
-    white_font_lg = Font(bold=True, color="FFFFFF", size=14)
-    white_font_sm = Font(bold=False, color="B0C4DE", size=8)
-    title_font = Font(bold=True, color="1A3A6B", size=12)
-    subtitle_font = Font(bold=False, color="64748B", size=8)
-    agent_font = Font(bold=True, color="1A3A6B", size=9)
-    data_font = Font(size=8.5)
+    title_font = Font(bold=True, color="1A3A6B", size=13)
+    sub_font = Font(bold=False, color="64748B", size=8)
+    agent_font = Font(bold=True, color="1A3A6B", size=10)
+    hdr_font = Font(bold=True, color="475569", size=8)
+    data_font = Font(size=9)
     thin_border = Border(
-        left=Side(style='thin', color='CBD5E1'),
-        right=Side(style='thin', color='CBD5E1'),
-        top=Side(style='thin', color='CBD5E1'),
-        bottom=Side(style='thin', color='CBD5E1'),
+        left=Side(style='thin', color='E2E8F0'),
+        right=Side(style='thin', color='E2E8F0'),
+        top=Side(style='thin', color='E2E8F0'),
+        bottom=Side(style='thin', color='E2E8F0'),
     )
-    center_align = Alignment(horizontal="center", vertical="center")
-    left_align = Alignment(vertical="center")
 
-    # ── Header block (rows 1-3) ──
-    # Banner image (ADII header)
     from openpyxl.drawing.image import Image
     from pathlib import Path
-    banner_path = Path(__file__).resolve().parent.parent / 'static' / 'img' / 'adii_header_white.png'
+    banner_path = Path(__file__).resolve().parent.parent / 'static' / 'img' / 'ADII_HEADER.png'
     if banner_path.exists():
         ws.row_dimensions[1].height = 80
         img = Image(str(banner_path))
@@ -548,64 +539,29 @@ def export_historique_excel(request):
         img.height = 80
         ws.add_image(img)
 
-    # Row 2: report info
-    ws.merge_cells('A3:K3')
-    info_cell = ws.cell(row=3, column=1)
-    now_str = datetime.now().strftime('%d/%m/%Y %H:%M')
-    agent_filter_str = request.GET.get('agent', '')
-    date_debut = request.GET.get('date_debut', '')
-    date_fin = request.GET.get('date_fin', '')
-    filter_text = "Tous les agents"
-    if agent_filter_str:
-        filter_agent = User.objects.filter(pk=agent_filter_str).first()
-        if filter_agent:
-            filter_text = filter_agent.get_full_name()
-    info_cell.value = f"Généré le {now_str} — Filtre : {filter_text}"
-    if date_debut or date_fin:
-        info_cell.value += f" — Période : {date_debut or '...'} au {date_fin or '...'}"
-    info_cell.font = subtitle_font
-    info_cell.alignment = Alignment(horizontal="left", vertical="center")
-    ws.row_dimensions[3].height = 22
+    row = 3
+    ws.cell(row=row, column=1, value="Historique par agent").font = title_font
+    row += 1
 
-    # Row 4: empty spacer
-    ws.row_dimensions[4].height = 6
-
-    # ── Data header row (row 5) ──
-    data_start_row = 5
-    demande_headers = ["Agent", "Matricule", "Service",
-                       "Date demande", "Type équipement", "Statut"]
-    retour_headers = ["Date retour", "Type équipement", "Quantité", "Motif retour", "Notes"]
-
-    # Demande headers (blue)
-    for col, h in enumerate(demande_headers, 1):
-        cell = ws.cell(row=data_start_row, column=col, value=h)
-        cell.font = Font(bold=True, color="FFFFFF", size=8)
-        cell.fill = header_demande_fill
-        cell.alignment = center_align
-        cell.border = thin_border
-
-    # Retour headers (red)
-    for col, h in enumerate(retour_headers, 7):
-        cell = ws.cell(row=data_start_row, column=col, value=h)
-        cell.font = Font(bold=True, color="FFFFFF", size=8)
-        cell.fill = header_retour_fill
-        cell.alignment = center_align
-        cell.border = thin_border
-
-    ws.row_dimensions[data_start_row].height = 22
-
-    # ── Data rows ──
-    row = data_start_row + 1
     agent_filter_val = request.GET.get('agent', '')
     date_debut_val = request.GET.get('date_debut', '')
     date_fin_val = request.GET.get('date_fin', '')
+    filter_text = "Tous les agents"
+    if agent_filter_val:
+        fa = User.objects.filter(pk=agent_filter_val).first()
+        if fa:
+            filter_text = fa.get_full_name()
+    info_parts = [f"Généré le {datetime.now().strftime('%d/%m/%Y %H:%M')}", filter_text]
+    if date_debut_val or date_fin_val:
+        info_parts.append(f"{date_debut_val or '...'} au {date_fin_val or '...'}")
+    ws.cell(row=row, column=1, value=" — ".join(info_parts)).font = sub_font
+    row += 2
 
-    from django.db.models import Prefetch
     agents_qs = User.objects.filter(role='agent').order_by('nom')
     if agent_filter_val:
         agents_qs = agents_qs.filter(pk=agent_filter_val)
 
-    m_qs = Measurement.objects.all()
+    m_qs = Measurement.objects.select_related('rempli_par')
     r_qs = RetourEffet.objects.all()
     if date_debut_val:
         m_qs = m_qs.filter(created_at__date__gte=date_debut_val)
@@ -619,81 +575,75 @@ def export_historique_excel(request):
         Prefetch('retours', queryset=r_qs),
     )
 
+    status_colors = {
+        'livre': '196F3D', 'pret': '196F3D', 'en_production': '5B21B6',
+        'valide': '1E40AF', 'refuse': 'B91C1C',
+    }
+
     for agent in agents_qs:
         measurements = list(agent.measurements.all())
         retours = list(agent.retours.all())
-        max_rows = max(len(measurements), len(retours), 1)
+        if not measurements and not retours:
+            continue
 
-        for i in range(max_rows):
-            m = measurements[i] if i < len(measurements) else None
-            r = retours[i] if i < len(retours) else None
-            is_even = (row % 2 == 0)
+        ws.cell(row=row, column=1, value=agent.get_full_name()).font = agent_font
+        info = f"Matricule: {agent.matricule or 'N/A'}  |  Service: {agent.service or 'N/A'}"
+        ws.cell(row=row, column=2, value=info).font = Font(size=8, color="64748B")
+        ws.merge_cells(start_row=row, start_column=2, end_row=row, end_column=7)
+        row += 1
 
-            # Agent info (cols 1-3)
-            if i == 0:
-                ws.cell(row=row, column=1, value=agent.get_full_name()).font = agent_font
-                ws.cell(row=row, column=2, value=agent.matricule or '').font = data_font
-                ws.cell(row=row, column=3, value=agent.service or '').font = data_font
-            else:
-                ws.cell(row=row, column=1, value='').font = data_font
-                ws.cell(row=row, column=2, value='').font = data_font
-                ws.cell(row=row, column=3, value='').font = data_font
-
-            # Demande data (cols 4-6)
-            if m:
-                ws.cell(row=row, column=4, value=m.created_at.strftime('%d/%m/%Y')).font = data_font
-                ws.cell(row=row, column=5, value=m.get_type_equipement_display()).font = data_font
-                ws.cell(row=row, column=6, value=m.get_status_display()).font = Font(size=8.5, bold=True,
-                    color='065F46' if m.status == 'livre' else
-                          '065F46' if m.status == 'pret' else
-                          '5B21B6' if m.status == 'en_production' else
-                          '1E40AF' if m.status == 'valide' else
-                          '991B1B' if m.status == 'refuse' else '92400E')
-            else:
-                for c in [4, 5, 6]:
-                    ws.cell(row=row, column=c, value='').font = data_font
-
-            # Retour data (cols 7-11)
-            if r:
-                ws.cell(row=row, column=7, value=r.created_at.strftime('%d/%m/%Y')).font = data_font
-                ws.cell(row=row, column=8, value=r.get_type_equipement_display()).font = data_font
-                ws.cell(row=row, column=9, value=r.quantite).font = Font(size=8.5, bold=True)
-                ws.cell(row=row, column=10, value=r.get_motif_display()).font = Font(size=8.5,
-                    color='991B1B' if r.motif == 'destruction' else
-                          '92400E' if r.motif == 'perte' else
-                          '3730A3' if r.motif == 'usure' else '475569')
-                ws.cell(row=row, column=11, value=r.notes or '—').font = data_font
-            else:
-                for c in [7, 8, 9, 10, 11]:
-                    ws.cell(row=row, column=c, value='').font = data_font
-
-            # Borders and row shading
-            bg = light_gray_fill if is_even else PatternFill(fill_type=None)
-            for col in range(1, 12):
-                cell = ws.cell(row=row, column=col)
-                cell.border = thin_border
-                cell.alignment = left_align
-                if not (col == 6 and m):
-                    cell.fill = bg
-
-            ws.row_dimensions[row].height = 18
+        if measurements:
+            ws.cell(row=row, column=1, value="Demandes d'équipement").font = Font(bold=True, size=8, color="475569")
             row += 1
+            m_headers = ["Date", "Type d'équipement", "Statut", "Rempli par"]
+            for ci, h in enumerate(m_headers, 1):
+                c = ws.cell(row=row, column=ci, value=h)
+                c.font = hdr_font
+                c.fill = sub_fill
+                c.border = thin_border
+            row += 1
+            for m in measurements:
+                ws.cell(row=row, column=1, value=m.created_at.strftime('%d/%m/%Y')).font = data_font
+                ws.cell(row=row, column=2, value=m.get_type_equipement_display()).font = data_font
+                sc = ws.cell(row=row, column=3, value=m.get_status_display())
+                sc.font = Font(size=9, bold=True, color=status_colors.get(m.status, '92400E'))
+                rempli = m.rempli_par.get_full_name() if m.rempli_par else '—'
+                ws.cell(row=row, column=4, value=rempli).font = data_font
+                for ci in range(1, 5):
+                    ws.cell(row=row, column=ci).border = thin_border
+                row += 1
 
-    # ── Column widths ──
-    col_widths = [22, 12, 14, 14, 18, 14, 14, 18, 10, 14, 20]
+        if retours:
+            ws.cell(row=row, column=1, value="Retours d'effets").font = Font(bold=True, size=8, color="475569")
+            row += 1
+            r_headers = ["Date", "Type d'équipement", "Quantité", "Motif", "Notes"]
+            for ci, h in enumerate(r_headers, 1):
+                c = ws.cell(row=row, column=ci, value=h)
+                c.font = hdr_font
+                c.fill = sub_fill
+                c.border = thin_border
+            row += 1
+            for r_item in retours:
+                ws.cell(row=row, column=1, value=r_item.created_at.strftime('%d/%m/%Y')).font = data_font
+                ws.cell(row=row, column=2, value=r_item.get_type_equipement_display()).font = data_font
+                ws.cell(row=row, column=3, value=r_item.quantite).font = Font(size=9, bold=True)
+                ws.cell(row=row, column=4, value=r_item.get_motif_display()).font = data_font
+                ws.cell(row=row, column=5, value=r_item.notes or '—').font = data_font
+                for ci in range(1, 6):
+                    ws.cell(row=row, column=ci).border = thin_border
+                row += 1
+
+        row += 1
+
+    col_widths = [14, 22, 12, 14, 18, 14]
     for i, w in enumerate(col_widths, 1):
         ws.column_dimensions[get_column_letter(i)].width = w
 
-    # ── Freeze panes ──
-    ws.freeze_panes = f'A{data_start_row + 1}'
-
-    # ── Print setup ──
     ws.sheet_properties.pageSetUpPr = openpyxl.worksheet.properties.PageSetupProperties(fitToPage=True)
-    ws.page_setup.orientation = 'landscape'
+    ws.page_setup.orientation = 'portrait'
     ws.page_setup.fitToWidth = 1
     ws.page_setup.fitToHeight = 0
 
-    # ── Response ──
     response = HttpResponse(
         content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
     )
@@ -984,6 +934,37 @@ def reception_pdf(request):
         response = HttpResponse(buffer, content_type='application/pdf')
         response['Content-Disposition'] = 'attachment; filename="bon_reception.pdf"'
         return response
+
+
+@role_required(['admin'])
+def liste_retours(request):
+    from accounts.models import User
+    retours = RetourEffet.objects.select_related('agent', 'created_by').order_by('-created_at')
+
+    agent_filter = request.GET.get('agent', '')
+    motif_filter = request.GET.get('motif', '')
+    date_debut = request.GET.get('date_debut', '')
+    date_fin = request.GET.get('date_fin', '')
+
+    if agent_filter:
+        retours = retours.filter(agent_id=agent_filter)
+    if motif_filter:
+        retours = retours.filter(motif=motif_filter)
+    if date_debut:
+        retours = retours.filter(created_at__date__gte=date_debut)
+    if date_fin:
+        retours = retours.filter(created_at__date__lte=date_fin)
+
+    agents = User.objects.filter(role='agent').order_by('nom')
+
+    return render(request, 'admin_panel/retours.html', {
+        'retours': retours,
+        'agents': agents,
+        'agent_filter': agent_filter,
+        'motif_filter': motif_filter,
+        'date_debut': date_debut,
+        'date_fin': date_fin,
+    })
 
 
 @login_required

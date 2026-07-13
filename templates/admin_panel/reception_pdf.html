@@ -5,60 +5,66 @@
   <style>
     @page {
       size: A4 portrait;
-      margin: 1.5cm 1.5cm;
+      margin: 2cm 1.8cm;
     }
     body { font-family: 'Times New Roman', Times, serif; font-size: 10pt; color: #1e293b; margin: 0; padding: 0; }
-    .header { text-align: center; margin-bottom: 20px; }
-    .header img { height: 55px; }
-    .title { font-size: 16pt; font-weight: 700; color: #1e293b; text-align: center; margin-bottom: 4px; }
-    .subtitle { font-size: 9pt; color: #64748b; text-align: center; margin-bottom: 24px; }
-    .line { border: none; border-top: 1px solid #cbd5e1; margin: 16px 0; }
-    .info-row { display: flex; justify-content: space-between; margin-bottom: 6px; font-size: 9pt; }
+    .header { text-align: center; margin-bottom: 8px; }
+    .header img { height: 130px; }
+    .header-separator { border: none; border-top: 2px solid #1A3A6B; margin: 16px 0 20px; }
+    .title { font-size: 18pt; font-weight: 700; color: #1A3A6B; text-align: center; margin-bottom: 2px; letter-spacing: 0.5px; }
+    .subtitle { font-size: 10pt; color: #475569; text-align: center; margin-bottom: 24px; }
+    .info-block { margin: 16px 0; padding: 10px 14px; background: #f8fafc; border-radius: 4px; }
+    .info-row { display: flex; justify-content: space-between; margin-bottom: 4px; font-size: 9pt; }
     .info-label { color: #64748b; }
     .info-value { font-weight: 600; }
     table { width: 100%; border-collapse: collapse; margin: 16px 0; font-size: 9pt; }
     th { padding: 6px 8px; text-align: left; font-weight: 600; font-size: 8pt; background: #f1f5f9; color: #475569; border-bottom: 1px solid #cbd5e1; }
-    td { padding: 5px 8px; border-bottom: 1px solid #f1f5f9; }
-    .signature { margin-top: 40px; }
-    .signature-line { width: 250px; border-top: 1px solid #1e293b; margin-top: 32px; padding-top: 6px; font-size: 8pt; color: #64748b; }
-    .footer { margin-top: 32px; font-size: 7pt; color: #94a3b8; text-align: center; }
+    td { padding: 6px 8px; border-bottom: 1px solid #f1f5f9; }
+    tr:nth-child(even) td { background: #fafbfc; }
+    .signature { margin-top: 48px; display: flex; justify-content: space-between; }
+    .signature-box { width: 200px; }
+    .signature-line { border-top: 1px solid #1e293b; margin-top: 40px; padding-top: 6px; font-size: 8pt; color: #475569; text-align: center; }
+    .footer { margin-top: 40px; font-size: 7pt; color: #94a3b8; text-align: center; }
   </style>
 </head>
 <body>
 
   <div class="header">
-    <img src="static/img/ADII_HEADER.svg" alt="ADII" style="height:55px;">
+    <img src="static/img/ADII_HEADER.svg" alt="ADII">
   </div>
+  <hr class="header-separator">
 
   <div class="title">Bon de réception</div>
   <div class="subtitle">Remise d'équipement d'habillement</div>
 
-  <hr class="line">
-
-  <div class="info-row">
-    <span class="info-label">Date de reception</span>
-    <span class="info-value">{{ date_remise }}</span>
+  <div class="info-block">
+    <div class="info-row">
+      <span class="info-label">Date de réception</span>
+      <span class="info-value">{{ date_remise }}</span>
+    </div>
+    <div class="info-row">
+      <span class="info-label">Responsable</span>
+      <span class="info-value">{{ responsable }}</span>
+    </div>
   </div>
-  <div class="info-row">
-    <span class="info-label">Responsable</span>
-    <span class="info-value">{{ responsable }}</span>
-  </div>
 
-  <hr class="line">
-
-  <h3 style="font-size: 10pt; margin: 12px 0 6px; color: #1e293b;">Agents servis</h3>
+  <h3 style="font-size: 10pt; margin: 20px 0 8px; color: #1e293b;">Agents servis</h3>
 
   <table>
     <thead><tr>
+      <th>N°</th>
       <th>Agent</th>
       <th>Matricule</th>
-      <th>Equipement</th>
+      <th>Service</th>
+      <th>Équipement</th>
     </tr></thead>
     <tbody>
       {% for f in fiches %}
       <tr>
-        <td>{{ f.user.get_full_name }}</td>
-        <td>{{ f.user.matricule }}</td>
+        <td style="color:#94a3b8">{{ forloop.counter }}</td>
+        <td><strong>{{ f.user.get_full_name }}</strong></td>
+        <td>{{ f.user.matricule|default:'—' }}</td>
+        <td>{{ f.user.service|default:'—' }}</td>
         <td>{{ f.get_type_equipement_display }}</td>
       </tr>
       {% endfor %}
@@ -66,11 +72,16 @@
   </table>
 
   <div class="signature">
-    <div class="signature-line">Signature du responsable</div>
+    <div class="signature-box">
+      <div class="signature-line">Signature du responsable</div>
+    </div>
+    <div class="signature-box">
+      <div class="signature-line">Cachet du service</div>
+    </div>
   </div>
 
   <div class="footer">
-    ADII — Administration des Douanes et Impots Indirects — Document genere automatiquement
+    ADII — Administration des Douanes et Impôts Indirects
   </div>
 </body>
 </html>
